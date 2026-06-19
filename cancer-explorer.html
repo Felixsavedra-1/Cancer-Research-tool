@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cancer Protein Explorer — Vedra Research</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Hanken+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://3Dmol.org/build/3Dmol-min.js"></script>
+<style>
+  :root {
+    --black: #0A0A0B; --black-2: #111113; --panel: #141417;
+    --line: #26262B; --line-soft: #19191D;
+    --bone: #E8E3D6; --grey: #8C8C93; --grey-dim: #5C5C63;
+    --gold: #C6A15B; --gold-dim: #6e5c34; --crimson: #B23A3A;
+    --display: 'Spectral', Georgia, serif;
+    --body: 'Hanken Grotesk', system-ui, -apple-system, sans-serif;
+    --mono: 'IBM Plex Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; font-family: var(--body);
+    background: var(--black); color: var(--bone); font-size: 16px; line-height: 1.6;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image:
+      linear-gradient(var(--line-soft) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+    background-size: 64px 64px; opacity: .45;
+    -webkit-mask-image: radial-gradient(120% 120% at 70% 0%, #000 0%, transparent 75%);
+            mask-image: radial-gradient(120% 120% at 70% 0%, #000 0%, transparent 75%);
+  }
+  body > * { position: relative; z-index: 1; }
+
+  .eyebrow {
+    font-family: var(--mono); font-size: .7rem; letter-spacing: .22em;
+    text-transform: uppercase; color: var(--grey);
+  }
+
+  header { border-bottom: 1px solid var(--line); }
+  .topbar {
+    position: sticky; top: 0; z-index: 20;
+    background: rgba(10,10,11,.74); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .topbar-inner {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 58px; padding: 0 24px;
+  }
+  .mark { font-family: var(--mono); font-size: .86rem; letter-spacing: .14em; }
+  .backlink {
+    font-family: var(--mono); font-size: .74rem; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--grey); transition: color .2s ease;
+  }
+  .backlink:hover { color: var(--bone); }
+  .masthead { padding: 26px 24px 20px; }
+  .masthead .designation {
+    font-family: var(--mono); font-size: .72rem; letter-spacing: .18em;
+    text-transform: uppercase; color: var(--gold); display: block; margin-bottom: .6rem;
+  }
+  header h1 {
+    margin: 0; font-family: var(--display); font-weight: 300;
+    font-size: clamp(1.9rem, 4vw, 2.8rem); line-height: 1.08; letter-spacing: -.012em;
+  }
+  header h1 em { font-style: italic; color: var(--gold); font-weight: 400; }
+  header .lede { margin: .9rem 0 0; color: var(--grey); font-size: 1.02rem; max-width: 60ch; }
+  .disclaimer {
+    margin-top: 16px; padding: 9px 13px; font-size: .8rem;
+    border: 1px solid var(--crimson); border-radius: 2px; color: #d98d8d;
+    background: rgba(178,58,58,.07); max-width: 60ch;
+  }
+  .disclaimer b { color: #e0a3a3; }
+
+  .layout { display: grid; grid-template-columns: 320px 1fr; gap: 0; align-items: start; }
+  aside {
+    background: var(--panel); border-right: 1px solid var(--line);
+    padding: 24px; display: flex; flex-direction: column; gap: 22px;
+    min-height: calc(100vh - 58px);
+  }
+  aside h2 { margin: 0 0 10px; }
+  label { display: block; font-size: .85rem; margin-bottom: 7px; color: var(--bone); }
+  input[type=text], textarea, select {
+    width: 100%; padding: 9px 11px; border-radius: 2px; border: 1px solid var(--line);
+    background: var(--black-2); color: var(--bone); font-size: .92rem; font-family: var(--body);
+    transition: border-color .2s ease;
+  }
+  input[type=text]:focus, textarea:focus, select:focus { outline: none; border-color: var(--gold); }
+  textarea { resize: vertical; min-height: 52px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .chip {
+    padding: .3em .65em; font-family: var(--mono); font-size: .68rem; letter-spacing: .08em;
+    text-transform: uppercase; border-radius: 2px; cursor: pointer;
+    background: transparent; border: 1px solid var(--line); color: var(--grey);
+    transition: color .2s ease, border-color .2s ease;
+  }
+  .chip:hover { border-color: var(--gold); color: var(--gold); }
+  .toggle { display: flex; align-items: center; gap: 8px; font-size: .85rem; }
+  .toggle input { accent-color: var(--gold); }
+  button.primary {
+    width: 100%; padding: 11px; border: 1px solid var(--gold); border-radius: 2px; cursor: pointer;
+    background: var(--gold); color: var(--black);
+    font-family: var(--mono); font-weight: 500; font-size: .8rem;
+    letter-spacing: .12em; text-transform: uppercase; transition: background .2s ease, color .2s ease;
+  }
+  button.primary:hover { background: var(--bone); border-color: var(--bone); }
+  main { padding: 24px; display: flex; flex-direction: column; gap: 18px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 2px; padding: 18px; }
+  .viewer-wrap { position: relative; width: 100%; height: 540px; border-radius: 2px;
+    overflow: hidden; background: var(--black); border: 1px solid var(--line); }
+  #viewer { width: 100%; height: 100%; position: relative; }
+  .zoom-ctl {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%); z-index: 5;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    padding: 10px 6px; border-radius: 2px;
+    background: rgba(10,10,11,.55); border: 1px solid var(--line);
+  }
+  .zoom-sign { font-family: var(--mono); font-size: .82rem; color: var(--grey); line-height: 1; }
+  #zoom {
+    -webkit-appearance: slider-vertical;
+    writing-mode: vertical-lr; direction: rtl;
+    width: auto; height: 150px; padding: 0; margin: 0;
+    accent-color: var(--gold); cursor: pointer; background: transparent; border: none;
+  }
+  #zoom:focus { outline: none; }
+  .viewer-legend { font-size: .8rem; color: var(--grey); margin-top: 12px; display: flex;
+    gap: 16px; flex-wrap: wrap; align-items: center; }
+  .swatch { display: inline-block; width: 12px; height: 12px; border-radius: 2px; vertical-align: middle; margin-right: 5px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } .grid2 { grid-template-columns: 1fr; } aside { min-height: 0; } }
+  h3 { margin: 0 0 12px; font-family: var(--display); font-weight: 400; font-size: 1.25rem; letter-spacing: -.01em; }
+  .kv { font-size: .9rem; }
+  .kv div { padding: 5px 0; border-bottom: 1px solid var(--line-soft); }
+  .kv b { color: var(--grey); font-weight: 500; }
+  a { color: var(--gold); }
+  table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); }
+  th { color: var(--grey); font-family: var(--mono); font-weight: 500; font-size: .66rem;
+    letter-spacing: .12em; text-transform: uppercase; }
+  tr.hot { cursor: pointer; }
+  tr.hot:hover { background: var(--black-2); }
+  .bar { height: 6px; border-radius: 2px; background: var(--gold); }
+  .status { font-size: .9rem; padding: 10px 14px; border-radius: 2px; }
+  .status.info { background: rgba(140,140,147,.08); border: 1px solid var(--line); color: var(--grey); }
+  .status.err  { background: rgba(178,58,58,.09); border: 1px solid var(--crimson); color: #d98d8d; }
+  .status.ok   { background: rgba(198,161,91,.09); border: 1px solid var(--gold-dim); color: var(--gold); }
+  .muted { color: var(--grey); font-size: .85rem; }
+  details { font-size: .86rem; color: var(--grey); }
+  details summary { cursor: pointer; color: var(--gold); margin-bottom: 6px; font-family: var(--mono); font-size: .8rem; }
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--line);
+    border-top-color: var(--gold); border-radius: 50%; animation: spin .8s linear infinite; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .viewer-sub { color: var(--grey); font-size: .9rem; margin: -4px 0 12px; }
+  .badge { display: inline-block; font-family: var(--mono); font-size: .64rem; letter-spacing: .14em;
+    text-transform: uppercase; padding: .3em .6em; border-radius: 2px; border: 1px solid var(--line);
+    color: var(--grey); vertical-align: middle; }
+  .badge.onco { color: var(--gold); border-color: var(--gold-dim); background: rgba(198,161,91,.08); }
+  .badge.suppressor { color: var(--bone); border-color: var(--line); background: var(--black-2); }
+  .about p { margin: 12px 0 0; }
+  .about .matters { color: var(--grey); }
+  .about .matters b { color: var(--bone); font-weight: 500; }
+  .about .src { margin-top: 12px; font-size: .8rem; color: var(--grey-dim); }
+  .ctypes { display: flex; flex-direction: column; gap: 9px; }
+  .ctype-row { display: grid; grid-template-columns: 130px 1fr 52px; align-items: center; gap: 10px; font-size: .86rem; }
+  .ctype-row .name { color: var(--bone); }
+  .ctype-row .track { background: var(--black-2); border-radius: 2px; height: 8px; overflow: hidden; }
+  .ctype-row .count { text-align: right; color: var(--grey); font-family: var(--mono); font-size: .76rem; }
+  .note { border-left: 2px solid var(--gold-dim); }
+  .note p { margin: 10px 0 0; color: var(--grey); font-size: .92rem; max-width: 70ch; }
+  .note p b { color: var(--bone); font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="mark">Vedra Research</div>
+    <a class="backlink" href="https://vedraresearch.github.io/Vedra-Research/">← Index</a>
+  </div>
+</div>
+
+<header>
+  <div class="masthead">
+    <span class="designation">VR-05</span>
+    <h1>Cancer Protein Explorer — proteins and the mutations that <em>drive cancer</em>.</h1>
+    <p class="lede">Fetch a protein's real predicted 3D structure and see exactly where cancer mutations land on it — interactive, in your browser.</p>
+    <div class="disclaimer"><b>Research and education use only.</b> Not a medical device; not for diagnosis or treatment decisions.</div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside>
+    <div>
+      <h2>Protein</h2>
+      <label for="gene">Gene symbol</label>
+      <input type="text" id="gene" list="genelist" value="TP53" autocomplete="off" />
+      <datalist id="genelist">
+        <option>TP53</option><option>KRAS</option><option>BRAF</option><option>KIT</option>
+        <option>FLT3</option><option>IDH2</option><option>PTEN</option><option>EGFR</option>
+        <option>NRAS</option><option>PIK3CA</option>
+      </datalist>
+      <div class="chips" id="examples"></div>
+    </div>
+
+    <div>
+      <h2>Mutations</h2>
+      <label for="muts">Highlight residues (e.g. R175H)</label>
+      <textarea id="muts">R175H</textarea>
+      <div class="muted" style="margin-top:6px">Separate several with commas or spaces. Or click a hotspot &rarr;</div>
+    </div>
+
+    <div>
+      <h2>Display</h2>
+      <div class="toggle">
+        <input type="checkbox" id="plddt" checked />
+        <label for="plddt" style="margin:0">Colour by AlphaFold confidence (pLDDT)</label>
+      </div>
+    </div>
+
+    <button class="primary" id="load">Load structure</button>
+
+    <details>
+      <summary>What am I looking at?</summary>
+      This tool downloads the <b>real predicted 3D structure</b> of a protein from the
+      AlphaFold database and draws it in your browser. Cancer is often driven by
+      <b>mutations</b> that change a single building block (amino acid) of a protein.
+      Type a mutation like <code>R175H</code> to see exactly where on the protein it lands —
+      mutations buried in the protein's core often break its function.
+    </details>
+  </aside>
+
+  <main>
+    <div id="status" class="status info">Choose a gene and press <b>Load structure</b>, or just hit Load to see TP53 (the most commonly mutated gene in cancer).</div>
+
+    <div class="card">
+      <h3 id="proteinTitle">Protein viewer</h3>
+      <div class="viewer-sub" id="viewerSub">Loading a real predicted protein structure…</div>
+      <div class="viewer-wrap">
+        <div class="zoom-ctl">
+          <span class="zoom-sign">+</span>
+          <input type="range" id="zoom" min="0.4" max="6" step="0.05" value="1"
+                 aria-label="Zoom" orient="vertical" />
+          <span class="zoom-sign">&minus;</span>
+        </div>
+        <div id="viewer"></div>
+      </div>
+      <div class="viewer-legend" id="legend"></div>
+      <details style="margin-top:12px">
+        <summary>How to read this</summary>
+        <b>Drag</b> to spin the protein · use the <b>gold slider</b> on the left to zoom ·
+        scroll normally to move down the page. The ribbon is the protein's folded chain.
+        When "colour by confidence" is on, colour shows <b>how sure the AI is</b> about each
+        part's shape (red = less sure, blue = very sure) — it is not a medical signal.
+        The <b>glowing spheres</b> are the exact spots where the cancer mutations you typed land.
+      </details>
+    </div>
+
+    <div class="card about">
+      <h3>About this protein</h3>
+      <div id="about"><div class="muted">Load a protein to see what it does and why it matters.</div></div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h3>Where these mutations are found</h3>
+        <div id="cancerTypes"><div class="muted">The cancers these mutations show up in will appear here.</div></div>
+      </div>
+      <div class="card">
+        <h3>Known cancer hotspots <span class="muted" style="font-weight:400">— most-mutated spots</span></h3>
+        <div id="hotspots"><div class="muted">Load a protein to see where cancer mutations cluster.</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <details>
+        <summary>Technical details</summary>
+        <div class="kv" id="details" style="margin-top:10px"><div class="muted">No protein loaded yet.</div></div>
+      </details>
+    </div>
+
+    <div class="card note">
+      <span class="eyebrow">Why this exists</span>
+      <p>I built this to make real cancer-genomics data something <b>anyone can explore in a
+      browser</b> — see a protein's true 3D shape and exactly where the mutations that drive
+      cancer land on it. It was inspired by a young family member's fight with a rare cancer.
+      It's a <b>research and education tool</b>, not medical advice.</p>
+    </div>
+
+    <div class="muted">
+      Data: <a href="https://www.uniprot.org" target="_blank">UniProt</a> ·
+      <a href="https://alphafold.ebi.ac.uk" target="_blank">AlphaFold DB</a> ·
+      <a href="https://www.cancerhotspots.org" target="_blank">cancerhotspots.org</a>.
+      Structures are AI predictions; colour shows how confident the model is.
+    </div>
+  </main>
+</div>
+
+<script>
+const EXAMPLES = ["TP53","KRAS","BRAF","KIT","FLT3","IDH2","PTEN","EGFR"];
+const HIGHLIGHT_COLORS = ["magenta","orange","lime","cyan","yellow","red"];
+let viewer = null;
+let currentZoom = 1;       // tracked absolute magnification, driven by the zoom slider
+let hotspotCache = null;   // full cancerhotspots dataset, fetched once
+let currentProtein = null; // {accession, name, sequence, length, gene}
+let currentHotspots = [];  // hotspot list for the loaded gene (for mutation annotation)
+
+// Plain-language explainers for the well-known example genes (textbook facts).
+const GENE_INFO = {
+  TP53:  { role: "Tumor suppressor", summary: "Makes p53, the cell's emergency brake — it halts damaged cells from dividing and can order broken ones to self-destruct.", matters: "When TP53 is mutated the brake fails and damaged cells keep growing. It's the most commonly mutated gene in human cancer." },
+  KRAS:  { role: "Oncogene", summary: "A molecular on/off switch that tells the cell to grow and divide.", matters: "Mutations jam the switch permanently 'on,' driving relentless growth — common in pancreatic, colorectal and lung cancer." },
+  NRAS:  { role: "Oncogene", summary: "A growth on/off switch, a close cousin of KRAS.", matters: "Mutations keep it stuck 'on,' driving melanoma and some leukemias." },
+  BRAF:  { role: "Oncogene", summary: "Relays growth signals from the cell surface to its core.", matters: "The famous V600E mutation locks it 'on' — a hallmark of melanoma and some thyroid cancers." },
+  EGFR:  { role: "Oncogene", summary: "A receptor on the cell surface that signals cells to grow.", matters: "Mutations keep it firing non-stop — a major driver of non-small-cell lung cancer." },
+  KIT:   { role: "Oncogene", summary: "A cell-surface receptor that triggers growth when switched on.", matters: "Activating mutations drive GIST (a gut tumor), some leukemias and mast-cell disease." },
+  FLT3:  { role: "Oncogene", summary: "A receptor that tells blood-forming cells to multiply.", matters: "Mutations are a frequent driver of acute myeloid leukemia (AML), a blood cancer." },
+  IDH2:  { role: "Oncogene", summary: "An enzyme in the cell's energy-making machinery.", matters: "Mutations make it churn out an abnormal metabolite that fuels brain tumors and AML." },
+  PTEN:  { role: "Tumor suppressor", summary: "A brake on the PI3K pathway that pushes cells to grow and survive.", matters: "Losing PTEN releases that brake, promoting growth across many cancer types." },
+  PIK3CA:{ role: "Oncogene", summary: "Drives the PI3K pathway that promotes cell growth and survival.", matters: "Activating mutations are among the most common in breast and other cancers." },
+};
+
+// cancerhotspots tissue codes -> friendly cancer-type names.
+const TISSUE_NAMES = {
+  bowel: "Colorectal", blood: "Leukemia (blood)", lymph: "Lymphoma", head_neck: "Head & neck",
+  skin: "Melanoma / skin", uterus: "Uterine", soft_tissue: "Soft tissue", biliary_tract: "Biliary tract",
+  adrenal_gland: "Adrenal", pancreas: "Pancreatic", ovary: "Ovarian", cervix: "Cervical",
+  unk: "Other / unknown", lung: "Lung", breast: "Breast", stomach: "Stomach", brain: "Brain",
+  thyroid: "Thyroid", bladder: "Bladder", prostate: "Prostate", kidney: "Kidney", liver: "Liver",
+  esophagus: "Esophageal", testis: "Testicular", eye: "Eye", pns: "Nerve (PNS)", ampulla: "Ampullary",
+};
+const tissueName = code => TISSUE_NAMES[code] || code.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+// ---- tiny helpers ----
+const $ = id => document.getElementById(id);
+function setStatus(msg, kind="info") { const s = $("status"); s.className = "status " + kind; s.innerHTML = msg; }
+
+// Slider-driven zoom. 3Dmol's viewer.zoom(factor) is multiplicative (factor > 1 zooms in),
+// so we track the current absolute level and apply the ratio needed to reach the new one.
+function setZoom(v) {
+  if (!viewer) return;
+  viewer.zoom(v / currentZoom);
+  currentZoom = v;
+  viewer.render();
+}
+
+function parseMutations(text) {
+  const tokens = (text || "").split(/[,\s]+/).filter(Boolean);
+  const re = /^([A-Za-z])(\d+)([A-Za-z*])$/;
+  const parsed = [], bad = [];
+  for (const t of tokens) {
+    const m = t.match(re);
+    if (m) parsed.push({ wt: m[1].toUpperCase(), pos: +m[2], mut: m[3].toUpperCase(), label: t.toUpperCase() });
+    else bad.push(t);
+  }
+  return { parsed, bad };
+}
+
+function validate(mut, seq) {
+  if (mut.pos < 1 || mut.pos > seq.length) return { ok:false, msg:`${mut.label}: position ${mut.pos} is outside the protein (length ${seq.length}).` };
+  const actual = seq[mut.pos - 1];
+  if (actual !== mut.wt) return { ok:false, msg:`${mut.label}: sequence has ${actual} at position ${mut.pos}, not ${mut.wt}.` };
+  return { ok:true };
+}
+
+// ---- data fetching (all browser-direct; these APIs send CORS headers) ----
+async function fetchProtein(gene) {
+  const q = `gene_exact:${gene} AND organism_id:9606 AND reviewed:true`;
+  const url = `https://rest.uniprot.org/uniprotkb/search?query=${encodeURIComponent(q)}`
+            + `&fields=accession,protein_name,sequence,cc_function&format=json&size=1`;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error("UniProt lookup failed");
+  const results = (await r.json()).results || [];
+  if (!results.length) return null;
+  const rec = results[0];
+  const name = rec.proteinDescription?.recommendedName?.fullName?.value || rec.primaryAccession;
+  const sequence = rec.sequence?.value || "";
+  // Real "what it does" text, used as a fallback for genes we don't have a plain blurb for.
+  const fn = (rec.comments || []).find(c => c.commentType === "FUNCTION");
+  let functionText = fn?.texts?.[0]?.value || "";
+  functionText = functionText.replace(/\s*\(PubMed:[^)]*\)/g, "").replace(/\s*\{[^}]*\}/g, "").trim();
+  const firstTwo = functionText.match(/^(.*?[.!?])(\s+.*?[.!?])?/);
+  if (firstTwo) functionText = (firstTwo[1] + (firstTwo[2] || "")).trim();
+  return { accession: rec.primaryAccession, name, sequence, length: sequence.length, gene: gene.toUpperCase(), functionText };
+}
+
+async function fetchStructure(accession) {
+  // Ask the API for the current model URL rather than guessing the version
+  // (AlphaFold bumps it over time, e.g. v4 -> v6). Both endpoints send CORS headers.
+  const meta = await fetch(`https://alphafold.ebi.ac.uk/api/prediction/${accession}`);
+  if (!meta.ok) throw new Error("No AlphaFold structure available for " + accession);
+  const payload = await meta.json();
+  const pdbUrl = payload?.[0]?.pdbUrl;
+  if (!pdbUrl) throw new Error("No AlphaFold structure available for " + accession);
+  const r = await fetch(pdbUrl);
+  if (!r.ok) throw new Error("Could not download structure for " + accession);
+  return await r.text();
+}
+
+async function fetchHotspots(gene) {
+  if (!hotspotCache) {
+    const r = await fetch("https://www.cancerhotspots.org/api/hotspots/single");
+    hotspotCache = r.ok ? await r.json() : [];
+  }
+  const g = gene.toUpperCase();
+  const out = [];
+  for (const e of hotspotCache) {
+    if ((e.hugoSymbol || "").toUpperCase() !== g) continue;
+    const m = (e.residue || "").match(/(\d+)/);
+    if (!m) continue;
+    const variants = e.variantAminoAcid || {};
+    let count = e.tumorCount;
+    if (count == null) count = Object.values(variants).reduce((a,b)=>a+ +b, 0);
+    // most common substituted amino acid -> a concrete mutation string
+    let top = null, topN = -1;
+    for (const [aa, n] of Object.entries(variants)) if (+n > topN && aa !== "*") { top = aa; topN = +n; }
+    out.push({ residue: e.residue, position: +m[1], count: +count, top, composition: e.tumorTypeComposition || {} });
+  }
+  out.sort((a,b)=>b.count - a.count);
+  return out;
+}
+
+// ---- rendering ----
+function renderStructure(pdb, highlights, byConfidence) {
+  if (!viewer) viewer = $3Dmol.createViewer($("viewer"), { backgroundColor: "0x0A0A0B" });
+  viewer.clear();
+  viewer.addModel(pdb, "pdb");
+  if (byConfidence) {
+    viewer.setStyle({}, { cartoon: { colorscheme: { prop: "b", gradient: "roygb", min: 50, max: 90 } } });
+  } else {
+    viewer.setStyle({}, { cartoon: { color: "spectrum" } });
+  }
+  highlights.forEach((h, i) => {
+    const color = HIGHLIGHT_COLORS[i % HIGHLIGHT_COLORS.length];
+    const sel = { resi: h.position };
+    viewer.addStyle(sel, { stick: { color, radius: 0.3 } });
+    viewer.addStyle(sel, { sphere: { color, opacity: 0.55 } });
+    viewer.addResLabels(sel, { fontSize: 11, backgroundColor: color, backgroundOpacity: 0.75, fontColor: "black" });
+  });
+  viewer.zoomTo();
+  currentZoom = 1;
+  const z = $("zoom"); if (z) z.value = "1";
+  viewer.render();
+  $("legend").innerHTML = byConfidence
+    ? `<span><span class="swatch" style="background:#e63a3a"></span>low confidence</span>
+       <span><span class="swatch" style="background:#f2d641"></span>medium</span>
+       <span><span class="swatch" style="background:#2db84d"></span>good</span>
+       <span><span class="swatch" style="background:#3a6ee6"></span>high (pLDDT)</span>
+       ${highlights.length ? '<span>· highlighted spheres = your mutations</span>' : ''}`
+    : (highlights.length ? 'Highlighted spheres mark your mutations. Rainbow = N→C terminus.' : 'Rainbow runs from the start (N) to end (C) of the chain.');
+}
+
+function renderDetails(p) {
+  $("details").innerHTML = `
+    <div><b>Gene:</b> ${p.gene}</div>
+    <div><b>Protein:</b> ${p.name}</div>
+    <div><b>Length:</b> ${p.length} amino acids</div>
+    <div><b>UniProt:</b> <a href="https://www.uniprot.org/uniprotkb/${p.accession}" target="_blank">${p.accession}</a></div>
+    <div><b>Structure:</b> <a href="https://alphafold.ebi.ac.uk/entry/${p.accession}" target="_blank">AlphaFold DB &#8599;</a></div>`;
+}
+
+function renderAbout(p) {
+  const info = GENE_INFO[p.gene];
+  if (info) {
+    const cls = info.role === "Oncogene" ? "onco" : "suppressor";
+    $("about").innerHTML = `
+      <p><span class="badge ${cls}">${info.role}</span></p>
+      <p>${info.summary}</p>
+      <p class="matters"><b>Why mutations matter:</b> ${info.matters}</p>`;
+  } else if (p.functionText) {
+    $("about").innerHTML = `
+      <p>${p.functionText}</p>
+      <p class="src">Function summary from UniProt. Mutations that change this protein can
+      contribute to cancer — see where they land on the structure above.</p>`;
+  } else {
+    $("about").innerHTML = `<p class="muted">No plain-language summary available for ${p.gene} yet.
+      The 3D structure and mutation sites above are still fully interactive.</p>`;
+  }
+}
+
+function renderCancerTypes(list) {
+  const box = $("cancerTypes");
+  const totals = {};
+  for (const h of list) for (const [tissue, n] of Object.entries(h.composition || {})) totals[tissue] = (totals[tissue] || 0) + (+n || 0);
+  const ranked = Object.entries(totals).sort((a,b)=>b[1]-a[1]);
+  if (!ranked.length) { box.innerHTML = '<div class="muted">No cancer-type breakdown for this gene (the dataset leans toward solid tumours).</div>'; return; }
+  const max = ranked[0][1] || 1;
+  const rows = ranked.slice(0, 6).map(([tissue, n]) => `
+    <div class="ctype-row">
+      <span class="name">${tissueName(tissue)}</span>
+      <span class="track"><span class="bar" style="width:${Math.max(4, 100*n/max)}%"></span></span>
+      <span class="count">${n.toLocaleString()}</span>
+    </div>`).join("");
+  box.innerHTML = `<div class="ctypes">${rows}</div>
+    <div class="muted" style="margin-top:10px">How often this gene's hotspot mutations turned up in
+    each cancer type, across ${list.length} recurrent site${list.length===1?"":"s"} (tumor counts, cancerhotspots.org).</div>`;
+}
+
+function renderHotspots(list) {
+  currentHotspots = list;
+  const box = $("hotspots");
+  if (!list.length) { box.innerHTML = '<div class="muted">No hotspot record for this gene (the dataset is weighted toward solid tumours).</div>'; return; }
+  const max = list[0].count || 1;
+  const rows = list.slice(0, 15).map(h => {
+    const mutLabel = h.top ? `${h.residue}${h.top}` : h.residue;
+    return `<tr class="hot" data-mut="${mutLabel}" title="Click to highlight ${mutLabel}">
+      <td><b>${h.residue}</b></td>
+      <td>${h.count.toLocaleString()}</td>
+      <td style="width:40%"><div class="bar" style="width:${Math.max(6, 100*h.count/max)}%"></div></td>
+    </tr>`;
+  }).join("");
+  box.innerHTML = `<table><thead><tr><th>Spot</th><th>Tumours</th><th></th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="muted" style="margin-top:8px">Spots mutated again and again across many patients — <b>click a row</b> to drop it onto the 3D structure.</div>`;
+  box.querySelectorAll("tr.hot").forEach(tr => tr.onclick = () => {
+    const m = tr.getAttribute("data-mut");
+    const cur = $("muts").value.trim();
+    const set = new Set(cur.split(/[,\s]+/).filter(Boolean).map(s=>s.toUpperCase()));
+    set.add(m.toUpperCase());
+    $("muts").value = [...set].join(", ");
+    applyMutations();
+  });
+}
+
+// Re-highlight without re-downloading the structure (used by hotspot clicks).
+let lastPdb = null;
+function applyMutations(rerender = true) {
+  if (!currentProtein || !lastPdb) return;
+  const { parsed, bad } = parseMutations($("muts").value);
+  const highlights = [], errs = [...bad.map(b=>`Couldn't parse "${b}".`)];
+  for (const mut of parsed) {
+    const v = validate(mut, currentProtein.sequence);
+    if (v.ok) highlights.push(mut); else errs.push(v.msg);
+  }
+  // rerender=false: only refresh the text (e.g. after hotspot data arrives) without
+  // rebuilding the 3D scene, so the user's current rotation/zoom is preserved.
+  if (rerender) renderStructure(lastPdb, highlights, $("plddt").checked);
+  $("viewerSub").innerHTML = highlights.length
+    ? `The real 3D shape of the <b>${currentProtein.gene}</b> protein. Glowing spheres mark the mutation${highlights.length===1?"":"s"} you entered.`
+    : `The real 3D shape of the <b>${currentProtein.gene}</b> protein. Type a mutation like R175H to light up where it lands.`;
+  if (errs.length) { setStatus("⚠️ " + errs.join(" "), "err"); return; }
+  if (highlights.length) {
+    // Note any highlighted residue that sits on a known recurrent hotspot.
+    let note = "";
+    for (const h of highlights) {
+      const hit = currentHotspots.find(x => x.position === h.pos);
+      if (hit) { note = ` <b>${h.label}</b> sits on a known hotspot — mutated in ${hit.count.toLocaleString()} tumors.`; break; }
+    }
+    setStatus(`Showing <b>${currentProtein.gene}</b> with ${highlights.length} highlighted: ${highlights.map(h=>h.label).join(", ")}.${note}`, "ok");
+  } else {
+    setStatus(`Showing <b>${currentProtein.gene}</b> — ${currentProtein.name}.`, "ok");
+  }
+}
+
+async function load() {
+  const gene = $("gene").value.trim().toUpperCase();
+  if (!gene) { setStatus("Type a gene symbol first.", "err"); return; }
+  setStatus(`<span class="spinner"></span> Looking up ${gene} and downloading its structure…`, "info");
+  $("proteinTitle").textContent = gene;
+  try {
+    const protein = await fetchProtein(gene);
+    if (!protein) { setStatus(`No reviewed human protein found for <b>${gene}</b>. Check the symbol.`, "err"); return; }
+    currentProtein = protein;
+    currentHotspots = [];
+    renderDetails(protein);
+    renderAbout(protein);
+    lastPdb = await fetchStructure(protein.accession);
+    applyMutations();
+    // hotspots are best-effort; don't block the structure on them
+    fetchHotspots(gene).then(list => {
+      renderHotspots(list);
+      renderCancerTypes(list);
+      applyMutations(false);   // refresh status text only, so the hotspot annotation can appear
+    }).catch(() => { renderHotspots([]); renderCancerTypes([]); });
+  } catch (e) {
+    setStatus("Error: " + e.message, "err");
+  }
+}
+
+// ---- wire up UI ----
+$("examples").innerHTML = EXAMPLES.map(g => `<span class="chip" data-g="${g}">${g}</span>`).join("");
+$("examples").querySelectorAll(".chip").forEach(c => c.onclick = () => { $("gene").value = c.dataset.g; load(); });
+$("load").onclick = load;
+$("gene").addEventListener("keydown", e => { if (e.key === "Enter") load(); });
+$("muts").addEventListener("change", applyMutations);
+$("plddt").addEventListener("change", applyMutations);
+$("zoom").addEventListener("input", e => setZoom(+e.target.value));
+
+// Let the page scroll when the cursor is over the viewer: catch the wheel event at the
+// capture phase on the wrapper and stop it before 3Dmol's canvas listener (a descendant)
+// can zoom + preventDefault. We don't preventDefault, so the browser scrolls normally.
+// All zoom now goes through the slider.
+document.querySelector(".viewer-wrap")
+  .addEventListener("wheel", e => e.stopPropagation(), { capture: true, passive: true });
+
+// auto-load TP53 on first visit so visitors see something immediately
+load();
+</script>
+</body>
+</html>
