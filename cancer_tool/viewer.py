@@ -1,9 +1,4 @@
-"""Build interactive 3D molecular views with py3Dmol.
-
-The view is returned as a self-contained HTML string so it can be embedded in
-Streamlit via ``st.components.v1.html``. Two layers matter: colouring by pLDDT
-confidence (don't trust low-confidence regions) and highlighting mutated residues.
-"""
+"""Build interactive 3D molecular views with py3Dmol."""
 
 from __future__ import annotations
 
@@ -21,27 +16,16 @@ def render_structure(
 ) -> str:
     """Return embeddable HTML for a 3D view of ``pdb_text``.
 
-    ``highlights`` is a list of ``{position, label, color?}`` dicts; each named
-    residue is drawn as sticks + a translucent sphere and labelled. When
-    ``color_by_confidence`` is true the cartoon is coloured by the B-factor
-    column, which for AlphaFold models holds the per-residue pLDDT score
-    (red ≈ low confidence, blue ≈ high).
+    Each ``highlights`` entry (``{position, label, color?}``) is drawn as sticks plus
+    a translucent sphere and labelled. With ``color_by_confidence`` the cartoon is
+    coloured by pLDDT (the B-factor column of AlphaFold models): red low, blue high.
     """
     view = py3Dmol.view(width=width, height=height)
     view.addModel(pdb_text, "pdb")
 
     if color_by_confidence:
         view.setStyle(
-            {
-                "cartoon": {
-                    "colorscheme": {
-                        "prop": "b",
-                        "gradient": "roygb",
-                        "min": 50,
-                        "max": 90,
-                    }
-                }
-            }
+            {"cartoon": {"colorscheme": {"prop": "b", "gradient": "roygb", "min": 50, "max": 90}}}
         )
     else:
         view.setStyle({"cartoon": {"color": "spectrum"}})

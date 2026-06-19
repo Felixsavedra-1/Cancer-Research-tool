@@ -173,6 +173,56 @@
   .note { border-left: 2px solid var(--gold-dim); }
   .note p { margin: 10px 0 0; color: var(--grey); font-size: .92rem; max-width: 70ch; }
   .note p b { color: var(--bone); font-weight: 500; }
+
+  /* Stage: viewer + context rail */
+  .stage { display: grid; grid-template-columns: minmax(0,1fr) clamp(264px, 24vw, 326px); gap: 18px; align-items: start; }
+  .context { display: flex; flex-direction: column; gap: 18px; }
+  @media (max-width: 1040px) { .stage { grid-template-columns: 1fr; } .context { order: -1; } }
+
+  /* Linear position map */
+  .track-wrap { margin-top: 14px; }
+  .track-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 7px; flex-wrap: wrap; }
+  .track-head .t-title { font-family: var(--mono); font-size: .66rem; letter-spacing: .12em; text-transform: uppercase; color: var(--grey); }
+  .track-head .t-sub { font-size: .76rem; color: var(--grey-dim); }
+  .postrack { position: relative; height: 48px; background: var(--black-2); border: 1px solid var(--line); border-radius: 2px; }
+  .postrack .axis { position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--line); }
+  .postrack .end-label { position: absolute; bottom: 3px; font-family: var(--mono); font-size: .6rem; color: var(--grey-dim); }
+  .hot-tick { position: absolute; bottom: 1px; width: 3px; transform: translateX(-50%); background: var(--gold);
+    border-radius: 1px 1px 0 0; cursor: pointer; transition: background .15s ease; }
+  .hot-tick:hover { background: var(--bone); }
+  .mut-mark { position: absolute; top: 1px; width: 0; height: 0; transform: translateX(-50%);
+    border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 7px solid; }
+  .track-empty { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--grey-dim); font-size: .8rem; }
+
+  /* Floating tooltip */
+  #tip { position: fixed; z-index: 50; pointer-events: none; opacity: 0; transition: opacity .12s ease;
+    background: var(--black-2); border: 1px solid var(--line); border-radius: 2px; padding: 6px 9px;
+    font-size: .78rem; color: var(--bone); max-width: 240px; box-shadow: 0 6px 22px rgba(0,0,0,.5); }
+  #tip b { color: var(--gold); }
+
+  /* Skeleton loaders */
+  .skeleton { position: relative; overflow: hidden; background: var(--black-2); border-radius: 2px; }
+  .skeleton::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, rgba(232,227,214,.06), transparent); animation: shimmer 1.3s infinite; }
+  @keyframes shimmer { to { transform: translateX(100%); } }
+  .sk-line { height: 11px; margin: 9px 0; }
+
+  /* Inline jargon term */
+  .term { border-bottom: 1px dotted var(--gold-dim); cursor: help; }
+
+  /* Reset-view button */
+  .view-reset { position: absolute; right: 12px; top: 12px; z-index: 5; font-family: var(--mono);
+    font-size: .64rem; letter-spacing: .1em; text-transform: uppercase; color: var(--grey);
+    background: rgba(10,10,11,.55); border: 1px solid var(--line); border-radius: 2px; padding: 5px 8px; cursor: pointer; }
+  .view-reset:hover { color: var(--bone); border-color: var(--gold-dim); }
+
+  /* First-run cue */
+  .firstrun { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between;
+    background: rgba(198,161,91,.07); border: 1px solid var(--gold-dim); border-radius: 2px; padding: 11px 14px; font-size: .88rem; }
+  .firstrun[hidden] { display: none; }
+  .firstrun b { color: var(--bone); font-weight: 500; }
+  .firstrun .x { cursor: pointer; color: var(--grey); font-family: var(--mono); padding: 0 4px; line-height: 1; }
+  .firstrun .x:hover { color: var(--bone); }
 </style>
 </head>
 <body>
@@ -234,34 +284,61 @@
   </aside>
 
   <main>
-    <div id="status" class="status info">Choose a gene and press <b>Load structure</b>, or just hit Load to see TP53 (the most commonly mutated gene in cancer).</div>
-
-    <div class="card">
-      <h3 id="proteinTitle">Protein viewer</h3>
-      <div class="viewer-sub" id="viewerSub">Loading a real predicted protein structure…</div>
-      <div class="viewer-wrap">
-        <div class="zoom-ctl">
-          <span class="zoom-sign">+</span>
-          <input type="range" id="zoom" min="0.4" max="6" step="0.05" value="1"
-                 aria-label="Zoom" orient="vertical" />
-          <span class="zoom-sign">&minus;</span>
-        </div>
-        <div id="viewer"></div>
-      </div>
-      <div class="viewer-legend" id="legend"></div>
-      <details style="margin-top:12px">
-        <summary>How to read this</summary>
-        <b>Drag</b> to spin the protein · use the <b>gold slider</b> on the left to zoom ·
-        scroll normally to move down the page. The ribbon is the protein's folded chain.
-        When "colour by confidence" is on, colour shows <b>how sure the AI is</b> about each
-        part's shape (red = less sure, blue = very sure) — it is not a medical signal.
-        The <b>glowing spheres</b> are the exact spots where the cancer mutations you typed land.
-      </details>
+    <div id="firstrun" class="firstrun" hidden>
+      <div><b>TP53 is loaded</b> — the most commonly mutated gene in cancer. Drag the structure to spin it,
+        type a mutation like <b>R175H</b>, or click a hotspot to drop it onto the 3D shape.</div>
+      <span class="x" id="firstrunX" title="Dismiss">&#10005;</span>
     </div>
 
-    <div class="card about">
-      <h3>About this protein</h3>
-      <div id="about"><div class="muted">Load a protein to see what it does and why it matters.</div></div>
+    <div class="stage">
+      <div class="card viewer-card">
+        <h3 id="proteinTitle">Protein viewer</h3>
+        <div id="status" class="status info" style="margin-bottom:12px">Loading a real predicted protein structure…</div>
+        <div class="viewer-wrap">
+          <div class="zoom-ctl">
+            <span class="zoom-sign">+</span>
+            <input type="range" id="zoom" min="0.4" max="6" step="0.05" value="1"
+                   aria-label="Zoom" orient="vertical" />
+            <span class="zoom-sign">&minus;</span>
+          </div>
+          <button class="view-reset" id="resetView" title="Recentre the camera">Reset view</button>
+          <div id="viewer"></div>
+        </div>
+
+        <div class="track-wrap">
+          <div class="track-head">
+            <span class="t-title">Position map · N &rarr; C</span>
+            <span class="t-sub">gold = <span class="term" title="A spot in the protein mutated again and again across many patients' tumours.">hotspots</span> (taller = more tumours) · click to highlight</span>
+          </div>
+          <div class="postrack" id="postrack"><div class="track-empty">Load a protein to map its mutation sites along the chain.</div></div>
+        </div>
+
+        <div class="viewer-legend" id="legend">
+          <span><span class="swatch" style="background:#e63a3a"></span>low confidence</span>
+          <span><span class="swatch" style="background:#f2d641"></span>medium</span>
+          <span><span class="swatch" style="background:#2db84d"></span>good</span>
+          <span><span class="swatch" style="background:#3a6ee6"></span>high <span class="term" title="pLDDT — AlphaFold's per-residue confidence score (0–100) for how sure it is about that part's predicted shape.">(pLDDT)</span></span>
+        </div>
+        <details style="margin-top:12px">
+          <summary>How to read this</summary>
+          <b>Drag</b> to spin the protein · use the <b>gold slider</b> on the left to zoom ·
+          scroll normally to move down the page. The ribbon is the protein's folded chain.
+          When "colour by confidence" is on, colour shows <b>how sure the AI is</b> about each
+          part's shape (red = less sure, blue = very sure) — it is not a medical signal.
+          The <b>glowing spheres</b> are the exact spots where the cancer mutations you typed land.
+        </details>
+      </div>
+
+      <div class="context">
+        <div class="card about">
+          <h3>About this protein</h3>
+          <div id="about"><div class="muted">Load a protein to see what it does and why it matters.</div></div>
+        </div>
+        <div class="card">
+          <h3>Key facts</h3>
+          <div class="kv" id="details"><div class="muted">No protein loaded yet.</div></div>
+        </div>
+      </div>
     </div>
 
     <div class="grid2">
@@ -273,13 +350,6 @@
         <h3>Known cancer hotspots <span class="muted" style="font-weight:400">— most-mutated spots</span></h3>
         <div id="hotspots"><div class="muted">Load a protein to see where cancer mutations cluster.</div></div>
       </div>
-    </div>
-
-    <div class="card">
-      <details>
-        <summary>Technical details</summary>
-        <div class="kv" id="details" style="margin-top:10px"><div class="muted">No protein loaded yet.</div></div>
-      </details>
     </div>
 
     <div class="card note">
@@ -299,16 +369,18 @@
   </main>
 </div>
 
+<div id="tip"></div>
+
 <script>
 const EXAMPLES = ["TP53","KRAS","BRAF","KIT","FLT3","IDH2","PTEN","EGFR"];
 const HIGHLIGHT_COLORS = ["magenta","orange","lime","cyan","yellow","red"];
 let viewer = null;
-let currentZoom = 1;       // tracked absolute magnification, driven by the zoom slider
-let hotspotCache = null;   // full cancerhotspots dataset, fetched once
-let currentProtein = null; // {accession, name, sequence, length, gene}
-let currentHotspots = [];  // hotspot list for the loaded gene (for mutation annotation)
+let currentZoom = 1;
+let hotspotCache = null;
+let currentProtein = null;
+let currentHotspots = [];
+let lastHighlights = [];
 
-// Plain-language explainers for the well-known example genes (textbook facts).
 const GENE_INFO = {
   TP53:  { role: "Tumor suppressor", summary: "Makes p53, the cell's emergency brake — it halts damaged cells from dividing and can order broken ones to self-destruct.", matters: "When TP53 is mutated the brake fails and damaged cells keep growing. It's the most commonly mutated gene in human cancer." },
   KRAS:  { role: "Oncogene", summary: "A molecular on/off switch that tells the cell to grow and divide.", matters: "Mutations jam the switch permanently 'on,' driving relentless growth — common in pancreatic, colorectal and lung cancer." },
@@ -322,7 +394,6 @@ const GENE_INFO = {
   PIK3CA:{ role: "Oncogene", summary: "Drives the PI3K pathway that promotes cell growth and survival.", matters: "Activating mutations are among the most common in breast and other cancers." },
 };
 
-// cancerhotspots tissue codes -> friendly cancer-type names.
 const TISSUE_NAMES = {
   bowel: "Colorectal", blood: "Leukemia (blood)", lymph: "Lymphoma", head_neck: "Head & neck",
   skin: "Melanoma / skin", uterus: "Uterine", soft_tissue: "Soft tissue", biliary_tract: "Biliary tract",
@@ -333,12 +404,52 @@ const TISSUE_NAMES = {
 };
 const tissueName = code => TISSUE_NAMES[code] || code.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 
-// ---- tiny helpers ----
 const $ = id => document.getElementById(id);
 function setStatus(msg, kind="info") { const s = $("status"); s.className = "status " + kind; s.innerHTML = msg; }
 
-// Slider-driven zoom. 3Dmol's viewer.zoom(factor) is multiplicative (factor > 1 zooms in),
-// so we track the current absolute level and apply the ratio needed to reach the new one.
+function showTip(e, html) { const t = $("tip"); t.innerHTML = html; t.style.opacity = "1"; moveTip(e); }
+function moveTip(e) { const t = $("tip"); t.style.left = (e.clientX + 12) + "px"; t.style.top = (e.clientY - 8) + "px"; }
+function hideTip() { $("tip").style.opacity = "0"; }
+
+function addMutation(label) {
+  const set = new Set($("muts").value.split(/[,\s]+/).filter(Boolean).map(s => s.toUpperCase()));
+  set.add(label.toUpperCase());
+  $("muts").value = [...set].join(", ");
+  applyMutations();
+}
+
+function renderPositionTrack() {
+  const box = $("postrack");
+  if (!currentProtein) { box.innerHTML = '<div class="track-empty">Load a protein to map its mutation sites along the chain.</div>'; return; }
+  const len = currentProtein.length || 1;
+  const pct = p => (100 * (p - 1) / Math.max(1, len - 1));
+  const maxCount = (currentHotspots[0] && currentHotspots[0].count) || 1;
+  let html = '<div class="axis"></div>'
+    + '<span class="end-label" style="left:5px">1</span>'
+    + `<span class="end-label" style="right:5px">${len}</span>`;
+  for (const h of currentHotspots) {
+    const height = 9 + 27 * Math.sqrt(h.count / maxCount);
+    const opacity = (0.4 + 0.6 * (h.count / maxCount)).toFixed(2);
+    const mutLabel = h.top ? `${h.residue}${h.top}` : h.residue;
+    html += `<span class="hot-tick" data-mut="${mutLabel}"`
+      + ` data-tip="<b>${h.residue}</b> · ${h.count.toLocaleString()} tumours · click to highlight"`
+      + ` style="left:${pct(h.position)}%;height:${height}px;opacity:${opacity}"></span>`;
+  }
+  lastHighlights.forEach((m, i) => {
+    const color = HIGHLIGHT_COLORS[i % HIGHLIGHT_COLORS.length];
+    html += `<span class="mut-mark" data-tip="<b>${m.label}</b> · your mutation"`
+      + ` style="left:${pct(m.pos)}%;border-top-color:${color}"></span>`;
+  });
+  box.innerHTML = html;
+  box.querySelectorAll(".hot-tick").forEach(t => { t.onclick = () => addMutation(t.getAttribute("data-mut")); });
+  box.querySelectorAll("[data-tip]").forEach(el => {
+    el.addEventListener("mouseenter", e => showTip(e, el.getAttribute("data-tip")));
+    el.addEventListener("mousemove", moveTip);
+    el.addEventListener("mouseleave", hideTip);
+  });
+}
+
+// 3Dmol's zoom() is multiplicative, so track the absolute level and apply the ratio.
 function setZoom(v) {
   if (!viewer) return;
   viewer.zoom(v / currentZoom);
@@ -365,7 +476,6 @@ function validate(mut, seq) {
   return { ok:true };
 }
 
-// ---- data fetching (all browser-direct; these APIs send CORS headers) ----
 async function fetchProtein(gene) {
   const q = `gene_exact:${gene} AND organism_id:9606 AND reviewed:true`;
   const url = `https://rest.uniprot.org/uniprotkb/search?query=${encodeURIComponent(q)}`
@@ -377,7 +487,6 @@ async function fetchProtein(gene) {
   const rec = results[0];
   const name = rec.proteinDescription?.recommendedName?.fullName?.value || rec.primaryAccession;
   const sequence = rec.sequence?.value || "";
-  // Real "what it does" text, used as a fallback for genes we don't have a plain blurb for.
   const fn = (rec.comments || []).find(c => c.commentType === "FUNCTION");
   let functionText = fn?.texts?.[0]?.value || "";
   functionText = functionText.replace(/\s*\(PubMed:[^)]*\)/g, "").replace(/\s*\{[^}]*\}/g, "").trim();
@@ -387,8 +496,6 @@ async function fetchProtein(gene) {
 }
 
 async function fetchStructure(accession) {
-  // Ask the API for the current model URL rather than guessing the version
-  // (AlphaFold bumps it over time, e.g. v4 -> v6). Both endpoints send CORS headers.
   const meta = await fetch(`https://alphafold.ebi.ac.uk/api/prediction/${accession}`);
   if (!meta.ok) throw new Error("No AlphaFold structure available for " + accession);
   const payload = await meta.json();
@@ -413,7 +520,6 @@ async function fetchHotspots(gene) {
     const variants = e.variantAminoAcid || {};
     let count = e.tumorCount;
     if (count == null) count = Object.values(variants).reduce((a,b)=>a+ +b, 0);
-    // most common substituted amino acid -> a concrete mutation string
     let top = null, topN = -1;
     for (const [aa, n] of Object.entries(variants)) if (+n > topN && aa !== "*") { top = aa; topN = +n; }
     out.push({ residue: e.residue, position: +m[1], count: +count, top, composition: e.tumorTypeComposition || {} });
@@ -422,7 +528,6 @@ async function fetchHotspots(gene) {
   return out;
 }
 
-// ---- rendering ----
 function renderStructure(pdb, highlights, byConfidence) {
   if (!viewer) viewer = $3Dmol.createViewer($("viewer"), { backgroundColor: "0x0A0A0B" });
   viewer.clear();
@@ -447,7 +552,7 @@ function renderStructure(pdb, highlights, byConfidence) {
     ? `<span><span class="swatch" style="background:#e63a3a"></span>low confidence</span>
        <span><span class="swatch" style="background:#f2d641"></span>medium</span>
        <span><span class="swatch" style="background:#2db84d"></span>good</span>
-       <span><span class="swatch" style="background:#3a6ee6"></span>high (pLDDT)</span>
+       <span><span class="swatch" style="background:#3a6ee6"></span>high <span class="term" title="pLDDT — AlphaFold's per-residue confidence score (0–100) for how sure it is about that part's predicted shape.">(pLDDT)</span></span>
        ${highlights.length ? '<span>· highlighted spheres = your mutations</span>' : ''}`
     : (highlights.length ? 'Highlighted spheres mark your mutations. Rainbow = N→C terminus.' : 'Rainbow runs from the start (N) to end (C) of the chain.');
 }
@@ -463,10 +568,14 @@ function renderDetails(p) {
 
 function renderAbout(p) {
   const info = GENE_INFO[p.gene];
+  const ROLE_DEF = {
+    "Oncogene": "Oncogene — a gene that, when mutated or overactive, drives cells to grow and divide uncontrollably.",
+    "Tumor suppressor": "Tumor suppressor — a gene that normally restrains cell growth or repairs damage; losing it removes a brake on cancer.",
+  };
   if (info) {
     const cls = info.role === "Oncogene" ? "onco" : "suppressor";
     $("about").innerHTML = `
-      <p><span class="badge ${cls}">${info.role}</span></p>
+      <p><span class="badge ${cls}" style="cursor:help" title="${ROLE_DEF[info.role] || ""}">${info.role}</span></p>
       <p>${info.summary}</p>
       <p class="matters"><b>Why mutations matter:</b> ${info.matters}</p>`;
   } else if (p.functionText) {
@@ -513,18 +622,11 @@ function renderHotspots(list) {
   }).join("");
   box.innerHTML = `<table><thead><tr><th>Spot</th><th>Tumours</th><th></th></tr></thead><tbody>${rows}</tbody></table>
     <div class="muted" style="margin-top:8px">Spots mutated again and again across many patients — <b>click a row</b> to drop it onto the 3D structure.</div>`;
-  box.querySelectorAll("tr.hot").forEach(tr => tr.onclick = () => {
-    const m = tr.getAttribute("data-mut");
-    const cur = $("muts").value.trim();
-    const set = new Set(cur.split(/[,\s]+/).filter(Boolean).map(s=>s.toUpperCase()));
-    set.add(m.toUpperCase());
-    $("muts").value = [...set].join(", ");
-    applyMutations();
-  });
+  box.querySelectorAll("tr.hot").forEach(tr => tr.onclick = () => addMutation(tr.getAttribute("data-mut")));
 }
 
-// Re-highlight without re-downloading the structure (used by hotspot clicks).
 let lastPdb = null;
+// rerender=false refreshes only the text/track, preserving the current rotation and zoom.
 function applyMutations(rerender = true) {
   if (!currentProtein || !lastPdb) return;
   const { parsed, bad } = parseMutations($("muts").value);
@@ -533,15 +635,11 @@ function applyMutations(rerender = true) {
     const v = validate(mut, currentProtein.sequence);
     if (v.ok) highlights.push(mut); else errs.push(v.msg);
   }
-  // rerender=false: only refresh the text (e.g. after hotspot data arrives) without
-  // rebuilding the 3D scene, so the user's current rotation/zoom is preserved.
+  lastHighlights = highlights;
   if (rerender) renderStructure(lastPdb, highlights, $("plddt").checked);
-  $("viewerSub").innerHTML = highlights.length
-    ? `The real 3D shape of the <b>${currentProtein.gene}</b> protein. Glowing spheres mark the mutation${highlights.length===1?"":"s"} you entered.`
-    : `The real 3D shape of the <b>${currentProtein.gene}</b> protein. Type a mutation like R175H to light up where it lands.`;
+  renderPositionTrack();
   if (errs.length) { setStatus("⚠️ " + errs.join(" "), "err"); return; }
   if (highlights.length) {
-    // Note any highlighted residue that sits on a known recurrent hotspot.
     let note = "";
     for (const h of highlights) {
       const hit = currentHotspots.find(x => x.position === h.pos);
@@ -558,6 +656,9 @@ async function load() {
   if (!gene) { setStatus("Type a gene symbol first.", "err"); return; }
   setStatus(`<span class="spinner"></span> Looking up ${gene} and downloading its structure…`, "info");
   $("proteinTitle").textContent = gene;
+  const sk = '<div class="skeleton sk-line" style="width:85%"></div><div class="skeleton sk-line" style="width:96%"></div><div class="skeleton sk-line" style="width:62%"></div>';
+  $("about").innerHTML = sk; $("details").innerHTML = sk;
+  $("hotspots").innerHTML = sk; $("cancerTypes").innerHTML = sk;
   try {
     const protein = await fetchProtein(gene);
     if (!protein) { setStatus(`No reviewed human protein found for <b>${gene}</b>. Check the symbol.`, "err"); return; }
@@ -567,18 +668,17 @@ async function load() {
     renderAbout(protein);
     lastPdb = await fetchStructure(protein.accession);
     applyMutations();
-    // hotspots are best-effort; don't block the structure on them
+    // Hotspots are best-effort and must not block the structure render.
     fetchHotspots(gene).then(list => {
       renderHotspots(list);
       renderCancerTypes(list);
-      applyMutations(false);   // refresh status text only, so the hotspot annotation can appear
+      applyMutations(false);
     }).catch(() => { renderHotspots([]); renderCancerTypes([]); });
   } catch (e) {
     setStatus("Error: " + e.message, "err");
   }
 }
 
-// ---- wire up UI ----
 $("examples").innerHTML = EXAMPLES.map(g => `<span class="chip" data-g="${g}">${g}</span>`).join("");
 $("examples").querySelectorAll(".chip").forEach(c => c.onclick = () => { $("gene").value = c.dataset.g; load(); });
 $("load").onclick = load;
@@ -586,15 +686,15 @@ $("gene").addEventListener("keydown", e => { if (e.key === "Enter") load(); });
 $("muts").addEventListener("change", applyMutations);
 $("plddt").addEventListener("change", applyMutations);
 $("zoom").addEventListener("input", e => setZoom(+e.target.value));
+$("resetView").onclick = () => { if (!viewer) return; viewer.zoomTo(); currentZoom = 1; $("zoom").value = "1"; viewer.render(); };
 
-// Let the page scroll when the cursor is over the viewer: catch the wheel event at the
-// capture phase on the wrapper and stop it before 3Dmol's canvas listener (a descendant)
-// can zoom + preventDefault. We don't preventDefault, so the browser scrolls normally.
-// All zoom now goes through the slider.
+try { if (!localStorage.getItem("cpe_seen")) $("firstrun").hidden = false; } catch (e) {}
+$("firstrunX").onclick = () => { $("firstrun").hidden = true; try { localStorage.setItem("cpe_seen", "1"); } catch (e) {} };
+
+// Stop wheel events before 3Dmol's canvas zooms, so the page scrolls normally over the viewer.
 document.querySelector(".viewer-wrap")
   .addEventListener("wheel", e => e.stopPropagation(), { capture: true, passive: true });
 
-// auto-load TP53 on first visit so visitors see something immediately
 load();
 </script>
 </body>

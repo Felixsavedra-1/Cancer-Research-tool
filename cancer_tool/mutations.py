@@ -1,9 +1,4 @@
-"""Parse and validate point mutations, and fetch known cancer hotspots.
-
-Mutation strings use the standard one-letter form ``<wt><pos><mut>`` e.g.
-``R175H`` (arginine at position 175 becomes histidine). This module has no
-Streamlit/UI dependency so the parsing logic is easy to unit-test.
-"""
+"""Parse and validate point mutations, and fetch known cancer hotspots."""
 
 from __future__ import annotations
 
@@ -12,17 +7,11 @@ import re
 import requests
 
 _MUTATION_RE = re.compile(r"^\s*([A-Za-z])\s*(\d+)\s*([A-Za-z*])\s*$")
-
-# The API only serves the full single-residue hotspot set; we filter by gene
-# client-side (the hugoSymbol query parameter does not actually filter).
 CANCER_HOTSPOTS = "https://www.cancerhotspots.org/api/hotspots/single"
 
 
 def parse_mutation(text: str) -> dict | None:
-    """Parse a single mutation string like ``R175H``.
-
-    Returns ``{wt, position, mut, label}`` or ``None`` if it doesn't match.
-    """
+    """Parse a single mutation like ``R175H`` into ``{wt, position, mut, label}``."""
     match = _MUTATION_RE.match(text or "")
     if not match:
         return None
@@ -31,11 +20,7 @@ def parse_mutation(text: str) -> dict | None:
 
 
 def parse_mutations(text: str) -> tuple[list[dict], list[str]]:
-    """Parse a comma/space/newline separated list of mutations.
-
-    Returns ``(parsed, unparseable)`` where ``unparseable`` holds the raw tokens
-    that did not match the expected format.
-    """
+    """Parse a comma/space/newline separated list into ``(parsed, unparseable)``."""
     tokens = [t for t in re.split(r"[,\s]+", text or "") if t]
     parsed, bad = [], []
     for token in tokens:
@@ -45,11 +30,7 @@ def parse_mutations(text: str) -> tuple[list[dict], list[str]]:
 
 
 def validate_mutation(mutation: dict, sequence: str) -> tuple[bool, str]:
-    """Check a parsed mutation against the protein sequence.
-
-    Confirms the position is in range and the wild-type residue matches, which
-    catches typos and isoform/numbering mismatches before we mislead the user.
-    """
+    """Check a parsed mutation's position and wild-type residue against the sequence."""
     pos = mutation["position"]
     if pos < 1 or pos > len(sequence):
         return False, f"Position {pos} is outside the protein (length {len(sequence)})."
@@ -64,10 +45,10 @@ def validate_mutation(mutation: dict, sequence: str) -> tuple[bool, str]:
 
 
 def fetch_hotspots(gene: str, session: requests.Session | None = None) -> list[dict]:
-    """Return recurrent cancer mutation hotspots for a gene.
+    """Return recurrent cancer hotspots for a gene, sorted by tumour count (descending).
 
-    Each item is ``{residue, position, count, variants}`` sorted by tumour count
-    (descending). Returns an empty list if the gene has no hotspot record.
+    Each item is ``{residue, position, count, variants}``. The API serves the full
+    single-residue set, so the gene filter is applied client-side.
     """
     http = session or requests
     resp = http.get(CANCER_HOTSPOTS, headers={"Accept": "application/json"}, timeout=60)

@@ -1,7 +1,7 @@
 [theme]
 base = "dark"
-primaryColor = "#C6A15B"             # gold accent
-backgroundColor = "#0A0A0B"          # app background
-secondaryBackgroundColor = "#141417" # sidebar / panels
-textColor = "#E8E3D6"                # bone
-font = "sans serif"                  # exact fonts come from injected CSS in app.py
+primaryColor = "#C6A15B"
+backgroundColor = "#0A0A0B"
+secondaryBackgroundColor = "#141417"
+textColor = "#E8E3D6"
+font = "sans serif"  # exact fonts come from injected CSS in app.py

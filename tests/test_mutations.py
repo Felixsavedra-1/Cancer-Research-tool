@@ -1,13 +1,12 @@
-"""Unit tests for the pure mutation-parsing logic (no network needed)."""
+"""Unit tests for the network-free mutation-parsing logic."""
 
 from cancer_tool import mutations as mut
 
-# Real fragment of human TP53 (positions 170-180), so R175 is a valid arginine.
-TP53_FRAGMENT_170 = "TEVVRRCPHHE"  # index 0 == residue 170
+# Real human TP53 fragment for positions 170-180, padded so position 175 is arginine.
+TP53_FRAGMENT_170 = "TEVVRRCPHHE"
 
 
 def _tp53_like_sequence() -> str:
-    # Pad so absolute position 175 lands on the 'R' in the fragment above.
     return "A" * 169 + TP53_FRAGMENT_170 + "A" * 200
 
 
@@ -38,7 +37,7 @@ def test_parse_multiple_separators():
 
 def test_validate_matches_wild_type():
     seq = _tp53_like_sequence()
-    assert seq[174] == "R"  # 0-based index of position 175
+    assert seq[174] == "R"
     ok, _ = mut.validate_mutation(mut.parse_mutation("R175H"), seq)
     assert ok
 

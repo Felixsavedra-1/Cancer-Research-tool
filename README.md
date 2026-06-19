@@ -1,4 +1,4 @@
-# 🧬 Cancer Protein Explorer
+# Cancer Research Tool
 
 <p align="center">
   <img src="docs/demo.gif" alt="Cancer Protein Explorer — interactive 3D protein + mutation viewer" width="800">
@@ -27,11 +27,27 @@ Type a gene (e.g. `TP53`, `JAK2`, `NPM1`) and the tool fetches the protein's rea
 
 ## Quickstart
 
+The dashboard is a single self-contained file — **no install, no server**. Just open it:
+
+```bash
+open cancer-explorer.html      # macOS  (or double-click it, or host it on any static URL)
+```
+
+It loads TP53 automatically so you see a real structure immediately; type a mutation
+(e.g. `R175H`) or click a hotspot to drop it onto the 3D shape.
+
+<details>
+<summary><b>Developer / Python alternative (Streamlit)</b></summary>
+
+A Streamlit version of the same tool is also included for local Python development:
+
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 streamlit run app.py
 ```
+
+</details>
 
 ---
 
@@ -112,5 +128,5 @@ not be used for diagnosis or treatment decisions.
 ---
 
 <p align="center">
-  <img src="docs/VRcompany.png" alt="Vedra Research" width="300">
+  <img src="docs/VRcompany.png" alt="Vedra Research" width="50%">
 </p>

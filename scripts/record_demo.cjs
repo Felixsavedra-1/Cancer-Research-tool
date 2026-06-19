@@ -1,16 +1,8 @@
 /**
- * Record the README hero GIF: a slow top->bottom scroll of the Vedra Research
- * "Cancer Protein Explorer" (the branded standalone front-end, cancer-explorer.html).
- *
- * Records a .webm with Playwright. The 3D viewer is WebGL (3Dmol.js), so run
- * headless with ANGLE (HEADLESS=1) for reliable GPU rendering. Convert the
- * .webm to docs/demo.gif with ffmpeg + gifski afterwards.
- *
- * Prereqs: serve the repo so the page + its API/CDN calls work, e.g.
+ * Record the README hero GIF as a .webm via Playwright (convert with ffmpeg + gifski).
+ * Serve the repo first, then run headless with ANGLE for reliable WebGL:
  *   python3 -m http.server 8766
- * then:
  *   HEADLESS=1 CHROME_PATH=<chromium> NODE_PATH=<playwright> node scripts/record_demo.cjs
- *
  * Env overrides: DEMO_URL, OUT_DIR, HEADLESS, CHROME_PATH.
  */
 const { chromium } = require('playwright');
@@ -37,11 +29,8 @@ const H = 860;
 
   const t0 = Date.now();
   await page.goto(URL, { waitUntil: 'load', timeout: 60000 });
-
-  // Kick off the default load (TP53 / R175H / confidence colouring).
   await page.locator('#load').click();
 
-  // Wait for the structure + data cards to populate.
   try {
     await page.waitForFunction(
       () => {
@@ -60,12 +49,10 @@ const H = 860;
     console.error('  (content did not fully populate in time — continuing)');
   }
 
-  // Let the 3Dmol WebGL cartoon and webfonts settle/paint.
   await page.waitForTimeout(4500);
 
   console.log('SCROLL_START_SEC=' + ((Date.now() - t0) / 1000).toFixed(2));
 
-  // Smooth, slow ease-in-out scroll from top to bottom (~9s).
   await page.evaluate(async () => {
     function pickScroller() {
       const cands = [document.scrollingElement, document.body, document.documentElement];
@@ -81,9 +68,7 @@ const H = 860;
       }
       return best;
     }
-    // The page sets `scroll-behavior: smooth`, which coalesces our per-frame
-    // scrollTop writes and breaks the animation — force instant scrolling so
-    // our own ease curve drives the motion.
+    // Override the page's smooth scroll so our own ease curve drives the motion.
     document.documentElement.style.scrollBehavior = 'auto';
     document.body.style.scrollBehavior = 'auto';
 
@@ -103,10 +88,10 @@ const H = 860;
     });
   });
 
-  await page.waitForTimeout(1200); // hold at the bottom
+  await page.waitForTimeout(1200);
 
   const video = page.video();
-  await context.close(); // finalize the .webm
+  await context.close();
   const path = video ? await video.path() : null;
   await browser.close();
   console.log('VIDEO_PATH=' + path);

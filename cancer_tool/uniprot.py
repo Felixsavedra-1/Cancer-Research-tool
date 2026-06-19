@@ -1,9 +1,4 @@
-"""Resolve a human gene symbol to its reviewed UniProt protein record.
-
-We use UniProt because it is the authoritative cross-reference hub: from a gene
-symbol it gives us the canonical accession (which AlphaFold DB is keyed on) plus
-the protein sequence (which we use to validate mutations).
-"""
+"""Resolve a human gene symbol to its reviewed UniProt protein record."""
 
 from __future__ import annotations
 
@@ -13,10 +8,9 @@ UNIPROT_SEARCH = "https://rest.uniprot.org/uniprotkb/search"
 
 
 def get_protein(gene: str, session: requests.Session | None = None) -> dict | None:
-    """Look up a reviewed (Swiss-Prot) human protein by gene symbol.
+    """Look up a reviewed human protein by gene symbol.
 
-    Returns a dict with ``accession``, ``name``, ``sequence``, ``length`` and
-    ``gene``, or ``None`` if no reviewed human entry matches.
+    Returns ``{accession, name, gene, sequence, length}`` or ``None`` if no match.
     """
     http = session or requests
     params = {

@@ -1,10 +1,4 @@
-"""Cancer Protein Explorer — Streamlit app.
-
-Pick a cancer-relevant gene, fetch its real AlphaFold structure, and see in 3D
-where cancer mutations land on the protein. Research/education use only.
-
-Run with:  streamlit run app.py
-"""
+"""Cancer Protein Explorer — Streamlit app. Run with: streamlit run app.py"""
 
 from __future__ import annotations
 
@@ -104,12 +98,7 @@ a, a:visited { color: var(--gold); }
 
 
 def inject_brand_css() -> None:
-    """Apply the Vedra Research brand on top of the native dark theme.
-
-    Base colours live in ``.streamlit/config.toml``; this adds the brand fonts and
-    component styling, targeting stable ``data-testid`` hooks rather than
-    Streamlit's generated class names.
-    """
+    """Apply the Vedra Research brand fonts and component styling over the dark theme."""
     st.markdown(_BRAND_CSS, unsafe_allow_html=True)
     st.markdown(
         '<div class="vr-masthead">'
