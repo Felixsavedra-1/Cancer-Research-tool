@@ -1,0 +1,116 @@
+/**
+ * Record the README hero GIF: a slow top->bottom scroll of the Vedra Research
+ * "Cancer Protein Explorer" (the branded standalone front-end, cancer-explorer.html).
+ *
+ * Records a .webm with Playwright. The 3D viewer is WebGL (3Dmol.js), so run
+ * headless with ANGLE (HEADLESS=1) for reliable GPU rendering. Convert the
+ * .webm to docs/demo.gif with ffmpeg + gifski afterwards.
+ *
+ * Prereqs: serve the repo so the page + its API/CDN calls work, e.g.
+ *   python3 -m http.server 8766
+ * then:
+ *   HEADLESS=1 CHROME_PATH=<chromium> NODE_PATH=<playwright> node scripts/record_demo.cjs
+ *
+ * Env overrides: DEMO_URL, OUT_DIR, HEADLESS, CHROME_PATH.
+ */
+const { chromium } = require('playwright');
+
+const URL = process.env.DEMO_URL || 'http://localhost:8766/cancer-explorer.html';
+const OUT_DIR = process.env.OUT_DIR || '/tmp/demo_rec';
+const W = 1280;
+const H = 860;
+
+(async () => {
+  const headless = process.env.HEADLESS === '1';
+  const launchOpts = headless
+    ? { headless: true, args: ['--use-gl=angle', '--use-angle=default', '--enable-webgl'] }
+    : { headless: false };
+  if (process.env.CHROME_PATH) launchOpts.executablePath = process.env.CHROME_PATH;
+  const browser = await chromium.launch(launchOpts);
+
+  const context = await browser.newContext({
+    viewport: { width: W, height: H },
+    deviceScaleFactor: 2,
+    recordVideo: { dir: OUT_DIR, size: { width: W, height: H } },
+  });
+  const page = await context.newPage();
+
+  const t0 = Date.now();
+  await page.goto(URL, { waitUntil: 'load', timeout: 60000 });
+
+  // Kick off the default load (TP53 / R175H / confidence colouring).
+  await page.locator('#load').click();
+
+  // Wait for the structure + data cards to populate.
+  try {
+    await page.waitForFunction(
+      () => {
+        const canvas = document.querySelector('#viewer canvas');
+        const hot = document.querySelector('#hotspots');
+        const about = document.querySelector('#about');
+        const titled =
+          (document.querySelector('#proteinTitle')?.textContent || '') !== 'Protein viewer';
+        const hotReady = hot && !/Load a protein/i.test(hot.textContent || '');
+        const aboutReady = about && !/Load a protein/i.test(about.textContent || '');
+        return canvas && hotReady && aboutReady && titled;
+      },
+      { timeout: 60000 }
+    );
+  } catch (e) {
+    console.error('  (content did not fully populate in time — continuing)');
+  }
+
+  // Let the 3Dmol WebGL cartoon and webfonts settle/paint.
+  await page.waitForTimeout(4500);
+
+  console.log('SCROLL_START_SEC=' + ((Date.now() - t0) / 1000).toFixed(2));
+
+  // Smooth, slow ease-in-out scroll from top to bottom (~9s).
+  await page.evaluate(async () => {
+    function pickScroller() {
+      const cands = [document.scrollingElement, document.body, document.documentElement];
+      let best = document.scrollingElement || document.body;
+      let over = 0;
+      for (const e of cands) {
+        if (!e) continue;
+        const o = e.scrollHeight - e.clientHeight;
+        if (o > over) {
+          over = o;
+          best = e;
+        }
+      }
+      return best;
+    }
+    // The page sets `scroll-behavior: smooth`, which coalesces our per-frame
+    // scrollTop writes and breaks the animation — force instant scrolling so
+    // our own ease curve drives the motion.
+    document.documentElement.style.scrollBehavior = 'auto';
+    document.body.style.scrollBehavior = 'auto';
+
+    const el = pickScroller();
+    const max = el.scrollHeight - el.clientHeight;
+    const duration = 9000;
+    const ease = (t) => 0.5 - 0.5 * Math.cos(Math.PI * t);
+    await new Promise((resolve) => {
+      const start = performance.now();
+      function frame(now) {
+        const t = Math.min(1, (now - start) / duration);
+        el.scrollTop = max * ease(t);
+        if (t < 1) requestAnimationFrame(frame);
+        else resolve();
+      }
+      requestAnimationFrame(frame);
+    });
+  });
+
+  await page.waitForTimeout(1200); // hold at the bottom
+
+  const video = page.video();
+  await context.close(); // finalize the .webm
+  const path = video ? await video.path() : null;
+  await browser.close();
+  console.log('VIDEO_PATH=' + path);
+})().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

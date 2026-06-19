@@ -15,9 +15,110 @@ import streamlit.components.v1 as components
 
 from cancer_tool import __version__, mutations as mut, structures, uniprot, viewer
 
-# Starting points with good hotspot coverage; several (FLT3, IDH2, KIT) are
-# drivers in leukemias / blood cancers.
 EXAMPLE_GENES = ["TP53", "KRAS", "BRAF", "KIT", "FLT3", "IDH2", "PTEN", "EGFR"]
+
+_BRAND_CSS = """
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Hanken+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root {
+  --black: #0A0A0B; --black-2: #111113; --panel: #141417;
+  --line: #26262B; --line-soft: #19191D;
+  --bone: #E8E3D6; --grey: #8C8C93; --grey-dim: #5C5C63;
+  --gold: #C6A15B; --gold-dim: #6e5c34; --crimson: #B23A3A;
+  --display: 'Spectral', Georgia, serif;
+  --body: 'Hanken Grotesk', system-ui, -apple-system, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+/* Background grid overlay */
+.stApp::before {
+  content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(var(--line-soft) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+  background-size: 64px 64px; opacity: .45;
+  -webkit-mask-image: radial-gradient(120% 120% at 70% 0%, #000 0%, transparent 75%);
+          mask-image: radial-gradient(120% 120% at 70% 0%, #000 0%, transparent 75%);
+}
+
+html, body, .stApp, [data-testid="stSidebar"] { font-family: var(--body); }
+h1, h2, h3 {
+  font-family: var(--display) !important; font-weight: 300 !important;
+  letter-spacing: -.012em;
+}
+[data-testid="stCaptionContainer"], .stCaption { font-family: var(--mono); color: var(--grey); }
+
+/* Brand masthead */
+.vr-masthead { margin: 0 0 4px; }
+.vr-designation {
+  font-family: var(--mono); font-size: .72rem; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--gold);
+}
+.vr-mark {
+  font-family: var(--mono); font-size: .78rem; letter-spacing: .14em;
+  color: var(--grey); float: right;
+}
+.vr-mark a { color: var(--grey); text-decoration: none; }
+.vr-mark a:hover { color: var(--bone); }
+
+/* Buttons */
+.stButton button, .stDownloadButton button {
+  background: var(--gold); color: var(--black);
+  border: 1px solid var(--gold); border-radius: 2px;
+  font-family: var(--mono); font-weight: 500; font-size: .8rem;
+  letter-spacing: .12em; text-transform: uppercase;
+}
+.stButton button:hover, .stDownloadButton button:hover {
+  background: var(--bone); border-color: var(--bone); color: var(--black);
+}
+
+/* Inputs */
+[data-testid="stTextInput"] input,
+[data-testid="stTextArea"] textarea,
+[data-baseweb="select"] > div {
+  background: var(--black-2) !important; color: var(--bone) !important;
+  border: 1px solid var(--line) !important; border-radius: 2px !important;
+}
+[data-testid="stTextInput"] input:focus,
+[data-testid="stTextArea"] textarea:focus,
+[data-baseweb="select"] > div:focus-within {
+  border-color: var(--gold) !important; box-shadow: none !important;
+}
+
+/* Alerts / disclaimer */
+[data-testid="stAlert"] {
+  background: rgba(178,58,58,.07) !important;
+  border: 1px solid var(--crimson) !important; border-radius: 2px !important;
+  color: #d98d8d !important;
+}
+
+/* Tables & links */
+[data-testid="stTable"] th, [data-testid="stDataFrame"] th {
+  font-family: var(--mono); text-transform: uppercase; letter-spacing: .12em;
+  font-size: .66rem; color: var(--grey);
+}
+a, a:visited { color: var(--gold); }
+</style>
+"""
+
+
+def inject_brand_css() -> None:
+    """Apply the Vedra Research brand on top of the native dark theme.
+
+    Base colours live in ``.streamlit/config.toml``; this adds the brand fonts and
+    component styling, targeting stable ``data-testid`` hooks rather than
+    Streamlit's generated class names.
+    """
+    st.markdown(_BRAND_CSS, unsafe_allow_html=True)
+    st.markdown(
+        '<div class="vr-masthead">'
+        '<span class="vr-designation">VR-05</span>'
+        '<span class="vr-mark">'
+        '<a href="https://vedraresearch.github.io/Vedra-Research/">Vedra Research ↗</a>'
+        "</span></div>",
+        unsafe_allow_html=True,
+    )
 
 
 @st.cache_resource
@@ -43,6 +144,7 @@ def load_hotspots(gene: str):
 
 
 st.set_page_config(page_title="Cancer Protein Explorer", layout="wide")
+inject_brand_css()
 
 st.title("🧬 Cancer Protein Explorer")
 st.caption(
@@ -102,7 +204,6 @@ with st.spinner("Fetching AlphaFold structure…"):
         )
         st.stop()
 
-# Parse and validate the requested mutations against the real sequence.
 parsed, unparseable = mut.parse_mutations(mutation_text)
 highlights, invalid = [], []
 for mutation in parsed:

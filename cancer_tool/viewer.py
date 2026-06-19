@@ -1,16 +1,14 @@
 """Build interactive 3D molecular views with py3Dmol.
 
 The view is returned as a self-contained HTML string so it can be embedded in
-Streamlit via ``st.components.v1.html``. Two visual layers matter clinically:
-colouring by pLDDT confidence (don't trust low-confidence regions) and
-highlighting specific mutated residues.
+Streamlit via ``st.components.v1.html``. Two layers matter: colouring by pLDDT
+confidence (don't trust low-confidence regions) and highlighting mutated residues.
 """
 
 from __future__ import annotations
 
 import py3Dmol
 
-# Highlight colours, cycled across the supplied residue positions.
 _HIGHLIGHT_COLORS = ["magenta", "orange", "lime", "cyan", "yellow", "red"]
 
 
@@ -54,12 +52,16 @@ def render_structure(
         selection = {"resi": position}
         view.addStyle(selection, {"stick": {"color": color, "radius": 0.3}})
         view.addStyle(selection, {"sphere": {"color": color, "opacity": 0.6}})
-        label = hit.get("label", position)
         view.addResLabels(
             selection,
-            {"fontSize": 12, "backgroundColor": color, "backgroundOpacity": 0.7},
+            {
+                "fontSize": 11,
+                "fontColor": "black",
+                "backgroundColor": color,
+                "backgroundOpacity": 0.75,
+            },
         )
 
     view.zoomTo()
-    view.setBackgroundColor("white")
+    view.setBackgroundColor("0x0A0A0B")
     return view._make_html()
