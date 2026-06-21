@@ -14,10 +14,14 @@ REPO="$(cd "$(dirname "$0")/.." && pwd)"
 IN="${1:-$(ls -t /tmp/demo_rec/*.webm 2>/dev/null | head -1)}"
 OUT="${2:-$REPO/docs/demo.gif}"
 
-# Trim to the meaningful window (skip the blank load; keep structure -> mutations -> rankings).
-SS=2.4      # start: the 3D structure has painted and key facts are on screen
-DUR=5.2     # ends on the Target Priority rankings (avoids the empty-left frames at page bottom)
-FPS=16      # ~16.7fps reference cadence; 5.2s x 16 ~= 83 frames
+# Trim window. record_demo.cjs writes the exact top->bottom scroll window to markers.env next
+# to the webm; source it so the GIF starts on the page top and ends at the bottom (no guessing).
+# Env vars (SS/DUR) still win; the hardcoded values are a last-resort fallback for standalone use.
+MARKERS="$(dirname "${IN:-/tmp/demo_rec/x}")/markers.env"
+[ -f "$MARKERS" ] && . "$MARKERS"
+SS="${SS:-${GIF_SS:-2.4}}"   # start of the scroll window (page top, into the top hold)
+DUR="${DUR:-${GIF_DUR:-5.2}}" # full scroll + bottom hold
+FPS=16      # ~16.7fps reference cadence; ~5.5s x 16 ~= 88 frames
 # Cinematic 2.39:1 band: from the 1280x860 capture take a centered 1280x536 strip, scale to 1200x502.
 VF="crop=1280:536:0:162,scale=1200:502:flags=lanczos"
 
@@ -32,7 +36,7 @@ trap 'rm -rf "$TMP"' EXIT
 echo "Input : $IN"
 echo "Output: $OUT"
 ffmpeg -loglevel error -ss "$SS" -t "$DUR" -i "$IN" -vf "$VF,fps=$FPS" "$TMP/f_%04d.png"
-gifski --fps "$FPS" --width 1200 --height 502 --quality 88 -o "$OUT" "$TMP"/f_*.png
+gifski --fps "$FPS" --width 1200 --height 502 --quality 84 -o "$OUT" "$TMP"/f_*.png
 
 echo "Done."
 ffprobe -v error -select_streams v:0 -show_entries stream=width,height,nb_frames -of default=noprint_wrappers=1 "$OUT"

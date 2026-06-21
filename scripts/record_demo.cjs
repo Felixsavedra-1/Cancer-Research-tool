@@ -6,6 +6,7 @@
  * Env overrides: DEMO_URL, OUT_DIR, HEADLESS, CHROME_PATH.
  */
 const { chromium } = require('playwright');
+const fs = require('fs');
 
 const URL = process.env.DEMO_URL || 'http://localhost:8766/cancer-explorer.html';
 const OUT_DIR = process.env.OUT_DIR || '/tmp/demo_rec';
@@ -49,9 +50,31 @@ const H = 860;
     console.error('  (content did not fully populate in time — continuing)');
   }
 
-  await page.waitForTimeout(1500);
+  // Pin to the very top and disable native smooth-scroll so our own ease drives the motion,
+  // then hold briefly so the GIF has a clean top anchor frame.
+  await page.evaluate(() => {
+    function pickScroller() {
+      const cands = [document.scrollingElement, document.body, document.documentElement];
+      let best = document.scrollingElement || document.body;
+      let over = 0;
+      for (const e of cands) {
+        if (!e) continue;
+        const o = e.scrollHeight - e.clientHeight;
+        if (o > over) {
+          over = o;
+          best = e;
+        }
+      }
+      return best;
+    }
+    document.documentElement.style.scrollBehavior = 'auto';
+    document.body.style.scrollBehavior = 'auto';
+    pickScroller().scrollTop = 0;
+  });
+  await page.waitForTimeout(600); // top hold
 
-  console.log('SCROLL_START_SEC=' + ((Date.now() - t0) / 1000).toFixed(2));
+  const scrollStartMs = Date.now() - t0;
+  console.log('SCROLL_START_SEC=' + (scrollStartMs / 1000).toFixed(2));
 
   await page.evaluate(async () => {
     function pickScroller() {
@@ -68,13 +91,9 @@ const H = 860;
       }
       return best;
     }
-    // Override the page's smooth scroll so our own ease curve drives the motion.
-    document.documentElement.style.scrollBehavior = 'auto';
-    document.body.style.scrollBehavior = 'auto';
-
     const el = pickScroller();
     const max = el.scrollHeight - el.clientHeight;
-    const duration = 5000;
+    const duration = 5200;
     const ease = (t) => 0.5 - 0.5 * Math.cos(Math.PI * t);
     await new Promise((resolve) => {
       const start = performance.now();
@@ -88,7 +107,18 @@ const H = 860;
     });
   });
 
-  await page.waitForTimeout(800);
+  const scrollEndMs = Date.now() - t0;
+  await page.waitForTimeout(700); // bottom hold
+
+  // Hand the exact GIF window to scripts/make_demo_gif.sh: start 0.5s into the top hold,
+  // run through the full scroll plus the bottom hold. (Avoids guessing -ss/-t.)
+  const gifSs = Math.max(0, scrollStartMs / 1000 - 0.5);
+  const gifDur = (scrollEndMs - scrollStartMs) / 1000 + 0.5 + 0.7;
+  fs.writeFileSync(
+    OUT_DIR + '/markers.env',
+    `GIF_SS=${gifSs.toFixed(2)}\nGIF_DUR=${gifDur.toFixed(2)}\n`
+  );
+  console.log('GIF_SS=' + gifSs.toFixed(2) + ' GIF_DUR=' + gifDur.toFixed(2));
 
   const video = page.video();
   await context.close();
