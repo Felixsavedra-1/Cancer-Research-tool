@@ -24,6 +24,12 @@ const H = 860;
   });
   const page = await context.newPage();
 
+  // Suppress the first-visit auto-tour: a fresh headless profile has no localStorage,
+  // so the "Take the tour" coachmark overlay would auto-open and ruin the GIF.
+  await page.addInitScript(() => {
+    try { localStorage.setItem('cpe_seen', '1'); } catch (e) {}
+  });
+
   // The page's true scroll container (largest overflow); reused across evaluates.
   await page.addInitScript(() => {
     window.pickScroller = () => {
