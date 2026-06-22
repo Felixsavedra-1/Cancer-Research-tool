@@ -46,39 +46,60 @@
     font-size: .82rem; line-height: 1.5; color: var(--grey);
   }
 
-  header { border-bottom: 1px solid var(--line); }
   .topbar {
     position: sticky; top: 0; z-index: 20;
-    background: rgba(10,10,11,.74); backdrop-filter: blur(10px);
+    background: rgba(10,10,11,.82); backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--line);
   }
   .topbar-inner {
+    position: relative;
     display: flex; align-items: center; justify-content: space-between;
-    height: 58px; padding: 0 24px;
+    min-height: 56px; padding: 9px 24px; gap: 14px; flex-wrap: wrap;
   }
-  .brand { display: flex; align-items: center; gap: 12px; }
-  .mark {
-    font-family: var(--mono); font-size: .86rem; letter-spacing: .14em;
-    color: var(--bone); text-decoration: none; transition: color .2s ease;
+  .helix-emblem {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: 120px; height: 52px; pointer-events: none; opacity: .95; z-index: 1;
   }
-  .mark:hover { color: var(--gold); }
-  .masthead { padding: 26px 24px 20px; }
-  .masthead .designation {
-    font-family: var(--mono); font-size: .72rem; letter-spacing: .18em;
-    text-transform: uppercase; color: var(--gold); display: block; margin-bottom: .6rem;
+  /* avoid overlapping brand/actions on narrow screens (where actions also wrap) */
+  @media (max-width: 760px) { .helix-emblem { display: none; } }
+  .brand { display: flex; align-items: baseline; gap: 10px; }
+  .brand-name {
+    font-family: var(--mono); font-size: .9rem; letter-spacing: .14em; color: var(--bone);
   }
-  header h1 {
-    margin: 0; font-family: var(--display); font-weight: 300;
-    font-size: clamp(1.9rem, 4vw, 2.8rem); line-height: 1.08; letter-spacing: -.012em;
+  .brand-div { color: var(--gold); font-weight: 300; }
+  .brand-sub {
+    font-family: var(--mono); font-size: .8rem; letter-spacing: .14em; color: var(--grey);
   }
-  header h1 em { font-style: italic; color: var(--gold); font-weight: 400; }
-  header .lede { margin: .9rem 0 0; color: var(--grey); font-size: 1.02rem; max-width: 60ch; }
-  .disclaimer {
-    margin-top: 16px; padding: 9px 13px; font-size: .8rem;
-    border: 1px solid var(--crimson); border-radius: 2px; color: #d98d8d;
-    background: rgba(178,58,58,.07); max-width: 60ch;
+  .topbar-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .hbtn {
+    font-family: var(--mono); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--grey); background: transparent; border: 1px solid var(--line); border-radius: 2px;
+    padding: 6px 10px; cursor: pointer; transition: color .2s ease, border-color .2s ease;
   }
-  .disclaimer b { color: #e0a3a3; }
+  .hbtn:hover { color: var(--gold); border-color: var(--gold-dim); }
+  .modeswitch { display: flex; border: 1px solid var(--line); border-radius: 2px; overflow: hidden; }
+  .ms-opt {
+    font-family: var(--mono); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--grey); background: transparent; border: none; padding: 6px 11px; cursor: pointer;
+    transition: background .2s ease, color .2s ease;
+  }
+  .ms-opt + .ms-opt { border-left: 1px solid var(--line); }
+  .ms-opt.active { background: var(--gold); color: var(--black); }
+
+  .subbar {
+    padding: 8px 24px; font-size: .8rem; color: var(--grey-dim);
+    border-bottom: 1px solid var(--line); background: rgba(10,10,11,.4);
+  }
+  .subbar b { color: #c98f8f; font-weight: 500; }
+
+  /* Beginner / Expert detail levels */
+  body.mode-beginner .expert-only { display: none !important; }
+  body.mode-expert .beginner-only { display: none !important; }
+  .modehint { font-size: .86rem; line-height: 1.55; color: var(--grey); margin-bottom: 12px;
+    padding: 10px 13px; border: 1px solid var(--line); border-left: 2px solid var(--gold-dim);
+    border-radius: 2px; background: rgba(198,161,91,.04); }
+  .modehint b { color: var(--bone); }
+  .legend-plain { color: var(--grey-dim); font-style: italic; }
 
   .layout { display: grid; grid-template-columns: 320px 1fr; gap: 0; align-items: start; }
   aside {
@@ -239,32 +260,97 @@
     background: rgba(10,10,11,.55); border: 1px solid var(--line); border-radius: 2px; padding: 5px 8px; cursor: pointer; }
   .view-reset:hover { color: var(--bone); border-color: var(--gold-dim); }
 
-  /* First-run cue */
-  .firstrun { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between;
-    background: rgba(198,161,91,.07); border: 1px solid var(--gold-dim); border-radius: 2px; padding: 11px 14px; font-size: .88rem; }
-  .firstrun[hidden] { display: none; }
-  .firstrun b { color: var(--bone); font-weight: 500; }
-  .firstrun .x { cursor: pointer; color: var(--grey); font-family: var(--mono); padding: 0 4px; line-height: 1; }
-  .firstrun .x:hover { color: var(--bone); }
+  /* Pockets toggle + card */
+  .pockrow { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: .85rem; }
+  .pockrow input { accent-color: var(--gold); }
+  .pock-list { display: flex; flex-direction: column; gap: 8px; }
+  .pock-item { display: grid; grid-template-columns: 14px 1fr auto; align-items: center; gap: 10px;
+    padding: 8px 10px; border: 1px solid var(--line); border-radius: 2px; cursor: pointer;
+    background: var(--black-2); transition: border-color .2s ease; }
+  .pock-item:hover { border-color: var(--gold-dim); }
+  .pock-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .pock-item .pmeta { font-size: .82rem; color: var(--bone); }
+  .pock-item .pmeta small { color: var(--grey); }
+  .pock-item .pdrug { font-family: var(--mono); font-size: .74rem; color: var(--gold); }
+
+  /* Residue detail card */
+  .res-card .empty { color: var(--grey-dim); font-size: .84rem; }
+  .res-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .res-head .rlabel { font-family: var(--mono); font-size: 1.2rem; color: var(--bone); }
+  .res-head .rtag { font-family: var(--mono); font-size: .68rem; letter-spacing: .1em; text-transform: uppercase;
+    padding: .25em .55em; border-radius: 2px; border: 1px solid var(--line); color: var(--grey); }
+  .res-head .rtag.path { color: #e08a8a; border-color: var(--crimson); background: rgba(178,58,58,.08); }
+  .res-head .rtag.amb { color: var(--gold); border-color: var(--gold-dim); background: rgba(198,161,91,.08); }
+  .res-head .rtag.ben { color: #8fc99a; border-color: #3a6e45; background: rgba(58,110,69,.08); }
+  .res-metrics { display: flex; flex-direction: column; gap: 7px; margin-top: 12px; }
+  .res-metric { display: grid; grid-template-columns: 92px 1fr 38px; align-items: center; gap: 9px; font-size: .82rem; }
+  .res-metric .mlab { color: var(--grey); }
+  .res-metric .track { background: var(--black-2); border-radius: 2px; height: 7px; overflow: hidden; }
+  .res-metric .fill { height: 100%; border-radius: 2px; background: var(--gold); }
+  .res-metric .mval { text-align: right; color: var(--bone); font-family: var(--mono); font-size: .74rem; }
+  .res-why { margin-top: 12px; font-size: .86rem; color: var(--grey); }
+  .res-why b { color: var(--bone); font-weight: 500; }
+  .res-actions { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* Modal (glossary) */
+  .modal { position: fixed; inset: 0; z-index: 60; display: none; align-items: center; justify-content: center;
+    background: rgba(0,0,0,.62); backdrop-filter: blur(3px); padding: 24px; }
+  .modal.open { display: flex; }
+  .modal-box { background: var(--panel); border: 1px solid var(--line); border-radius: 3px;
+    max-width: 640px; width: 100%; max-height: 82vh; overflow: auto; padding: 24px; box-shadow: 0 18px 60px rgba(0,0,0,.6); }
+  .modal-box h3 { display: flex; justify-content: space-between; align-items: center; }
+  .modal-box .x { cursor: pointer; color: var(--grey); font-family: var(--mono); }
+  .modal-box .x:hover { color: var(--bone); }
+  .gloss dt { font-family: var(--mono); font-size: .82rem; color: var(--gold); margin-top: 14px; letter-spacing: .04em; }
+  .gloss dd { margin: 4px 0 0; font-size: .9rem; color: var(--grey); line-height: 1.55; }
+
+  /* Guided tour (coachmarks) */
+  .tour-mask { position: fixed; inset: 0; z-index: 70; display: none; background: transparent; }
+  .tour-mask.open { display: block; }
+  .tour-spot { position: absolute; border: 2px solid var(--gold); border-radius: 4px;
+    box-shadow: 0 0 0 4000px rgba(5,5,6,.6); transition: all .25s ease; pointer-events: none; }
+  .tour-pop { position: absolute; z-index: 71; max-width: 320px; background: var(--panel);
+    border: 1px solid var(--gold-dim); border-radius: 3px; padding: 16px 18px; box-shadow: 0 14px 44px rgba(0,0,0,.6); }
+  .tour-pop h4 { margin: 0 0 7px; font-family: var(--display); font-weight: 400; font-size: 1.1rem; color: var(--bone); }
+  .tour-pop p { margin: 0; font-size: .88rem; color: var(--grey); line-height: 1.55; }
+  .tour-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; }
+  .tour-nav .steps { font-family: var(--mono); font-size: .72rem; color: var(--grey-dim); }
+  .tour-nav .btns { display: flex; gap: 8px; }
+  .tour-btn { font-family: var(--mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase;
+    border-radius: 2px; padding: 6px 11px; cursor: pointer; border: 1px solid var(--line);
+    background: transparent; color: var(--grey); transition: color .2s ease, border-color .2s ease; }
+  .tour-btn:hover { color: var(--bone); border-color: var(--gold-dim); }
+  .tour-btn.primary { background: var(--gold); border-color: var(--gold); color: var(--black); }
+  .tour-btn.primary:hover { background: var(--bone); border-color: var(--bone); }
+  .tour-skip { font-family: var(--mono); font-size: .7rem; color: var(--grey-dim); background: none; border: none;
+    cursor: pointer; text-decoration: underline; }
+  .tour-skip:hover { color: var(--grey); }
 </style>
 </head>
 <body>
 <div class="topbar">
   <div class="topbar-inner">
     <div class="brand">
-      <a class="mark" href="https://vedraresearch.github.io/Vedra-Research/">Vedra Research</a>
+      <span class="brand-name">Vedra Research</span>
+      <span class="brand-div">|</span>
+      <span class="brand-sub">Cancer Research</span>
+    </div>
+    <canvas id="helixEmblem" class="helix-emblem" width="240" height="104" aria-hidden="true"></canvas>
+    <div class="topbar-actions">
+      <button class="hbtn" id="tourBtn" title="Replay the guided walkthrough">Take the tour</button>
+      <button class="hbtn" id="glossaryBtn" title="Plain-English definitions of the terms used here">Glossary</button>
+      <div class="modeswitch" id="modeSwitch" role="group" aria-label="Detail level">
+        <button class="ms-opt" data-mode="beginner" title="Plain-English view">Beginner</button>
+        <button class="ms-opt" data-mode="expert" title="Full numeric detail">Expert</button>
+      </div>
     </div>
   </div>
 </div>
 
-<header>
-  <div class="masthead">
-    <span class="designation">VR-05</span>
-    <h1>Cancer Protein Explorer — proteins and the mutations that <em>drive cancer</em>.</h1>
-    <p class="lede">Fetch a protein's real AlphaFold structure, analyse its folding dynamics, and rank the most actionable cancer-driver residues — interactive, in your browser.</p>
-    <div class="disclaimer"><b>Research and education use only.</b> Not a medical device; not for diagnosis or treatment decisions.</div>
-  </div>
-</header>
+<div class="subbar">
+  Interactive AlphaFold structures &amp; cancer-genomics data, in your browser.
+  <b>Research &amp; education use only</b> — not a medical device; not for diagnosis or treatment decisions.
+</div>
 
 <div class="layout">
   <aside>
@@ -287,15 +373,20 @@
       <div class="muted" style="margin-top:6px">Separate several with commas or spaces. Or click a hotspot &rarr;</div>
     </div>
 
-    <div>
+    <div id="displayPanel">
       <h2>Display</h2>
       <label for="colormode">Colour the structure by</label>
       <select id="colormode">
         <option value="plddt">AlphaFold confidence (pLDDT)</option>
+        <option value="path">Pathogenicity (AlphaMissense)</option>
         <option value="flex">Dynamics — flexibility (NMA)</option>
         <option value="priority">Target Priority Score</option>
       </select>
       <div class="muted" id="engineNote" style="margin-top:8px">Dynamics &amp; priority colouring are precomputed for the featured genes.</div>
+      <label class="pockrow" id="pockToggleRow" title="Show the druggable pockets found by a LIGSITE-style geometric scan">
+        <input type="checkbox" id="pockToggle" />
+        <span>Show <span class="term" title="A pocket on the protein surface big and enclosed enough that a drug molecule could plausibly bind there.">druggable pockets</span></span>
+      </label>
     </div>
 
     <button class="primary" id="load">Load structure</button>
@@ -315,16 +406,19 @@
   </aside>
 
   <main>
-    <div id="firstrun" class="firstrun" hidden>
-      <div><b>TP53 is loaded</b> — the most commonly mutated gene in cancer. Drag the structure to spin it,
-        type a mutation like <b>R175H</b>, or click a hotspot to drop it onto the 3D shape.</div>
-      <span class="x" id="firstrunX" title="Dismiss">&#10005;</span>
-    </div>
-
     <div class="stage">
       <div class="card viewer-card">
         <h3 id="proteinTitle">Protein viewer</h3>
         <div id="status" class="status info" style="margin-bottom:12px">Loading a real predicted protein structure…</div>
+        <div class="modehint beginner-only">
+          <b>New here?</b> Drag the 3D model to spin it. Coloured ticks below are real cancer
+          mutation hotspots — click any one (or a ranked target) to get a plain-English explanation.
+          Want the numbers? Flip to <b>Expert</b>, top-right.
+        </div>
+        <div class="modehint expert-only">
+          <b>Expert view.</b> Showing full numeric scores, the four priority axes, AlphaMissense
+          classes and ENM/NMA dynamics. Switch to <b>Beginner</b> for plain-English framing.
+        </div>
         <div class="viewer-wrap">
           <div class="zoom-ctl">
             <span class="zoom-sign">+</span>
@@ -349,7 +443,9 @@
           <span><span class="swatch" style="background:#e63a3a"></span>low confidence</span>
           <span><span class="swatch" style="background:#f2d641"></span>medium</span>
           <span><span class="swatch" style="background:#2db84d"></span>good</span>
-          <span><span class="swatch" style="background:#3a6ee6"></span>high <span class="term" title="pLDDT — AlphaFold's per-residue confidence score (0–100) for how sure it is about that part's predicted shape.">(pLDDT)</span></span>
+          <span><span class="swatch" style="background:#3a6ee6"></span>high</span>
+          <span class="beginner-only legend-plain">how sure the AI is about each part's shape</span>
+          <span class="expert-only term" title="pLDDT — AlphaFold's per-residue confidence score (0–100) for how sure it is about that part's predicted shape.">(pLDDT)</span>
         </div>
         <details style="margin-top:12px">
           <summary>How to read this</summary>
@@ -362,9 +458,17 @@
       </div>
 
       <div class="context">
+        <div class="card res-card" id="resCard">
+          <h3>Residue spotlight</h3>
+          <div id="resDetail"><div class="empty">Click any residue — a ranked target, a hotspot, or a tick on the position map — to see what it does and why it matters here.</div></div>
+        </div>
         <div class="card about">
           <h3>About this protein</h3>
           <div id="about"><div class="muted">Load a protein to see what it does and why it matters.</div></div>
+        </div>
+        <div class="card" id="pocketsCard">
+          <h3>Druggable pockets</h3>
+          <div id="pockets"><div class="muted">Pockets a drug could bind appear here for the featured genes. Tick “Show druggable pockets” to see them on the structure.</div></div>
         </div>
         <div class="card">
           <h3>Key facts</h3>
@@ -407,6 +511,31 @@
 
 <div id="tip"></div>
 
+<!-- Glossary modal -->
+<div class="modal" id="glossaryModal">
+  <div class="modal-box">
+    <h3>Glossary <span class="x" id="glossaryX" title="Close">&#10005;</span></h3>
+    <dl class="gloss" id="glossList"></dl>
+  </div>
+</div>
+
+<!-- Guided tour -->
+<div class="tour-mask" id="tourMask">
+  <div class="tour-spot" id="tourSpot"></div>
+  <div class="tour-pop" id="tourPop">
+    <h4 id="tourTitle"></h4>
+    <p id="tourBody"></p>
+    <div class="tour-nav">
+      <button class="tour-skip" id="tourSkip">Skip</button>
+      <span class="steps" id="tourSteps"></span>
+      <span class="btns">
+        <button class="tour-btn" id="tourBack">Back</button>
+        <button class="tour-btn primary" id="tourNext">Next</button>
+      </span>
+    </div>
+  </div>
+</div>
+
 <script>
 const EXAMPLES = ["TP53","KRAS","BRAF","KIT","FLT3","IDH2","PTEN","EGFR"];
 const HIGHLIGHT_COLORS = ["magenta","orange","lime","cyan","yellow","red"];
@@ -417,10 +546,24 @@ let currentProtein = null;
 let currentHotspots = [];
 let lastHighlights = [];
 let currentEngine = null;  // precomputed dynamics + priority for featured genes
+let currentAM = null;      // live per-residue mean AlphaMissense pathogenicity {pos: 0..1}
+let amUrl = null;          // amAnnotationsUrl from the AlphaFold prediction API
+let showPockets = false;   // pockets overlay on the 3D structure
+let spotlightPos = null;   // residue currently shown in the Residue spotlight card
 
 // Gradient colour stops, mirroring cancer_tool/viewer.py.
 const FLEX_STOPS = [[60,90,230],[230,230,230],[220,60,60]];      // rigid → mobile
 const PRIORITY_STOPS = [[40,40,46],[110,92,52],[198,161,91],[178,58,58]]; // low → high
+const PATH_STOPS = [[70,150,95],[225,200,90],[200,60,60]];       // benign → pathogenic
+const POCKET_COLORS = ["0x6fb1ff","0xb98cff","0x5fd0c0","0xe69a5f"]; // distinct hues per pocket
+
+// Plain-English definitions, reused by the About card and the Glossary modal.
+const ROLE_DEF = {
+  "Oncogene": "Oncogene — a gene that, when mutated or overactive, drives cells to grow and divide uncontrollably.",
+  "Tumor suppressor": "Tumor suppressor — a gene that normally restrains cell growth or repairs damage; losing it removes a brake on cancer.",
+};
+const AM_LABEL = { LPath: "Likely pathogenic", Amb: "Uncertain", LBen: "Likely benign" };
+const AM_TAGCLASS = { LPath: "path", Amb: "amb", LBen: "ben" };
 function lerpColor(v, stops) {
   v = Math.max(0, Math.min(1, v));
   if (stops.length === 1) { const [r,g,b]=stops[0]; return `0x${[r,g,b].map(x=>x.toString(16).padStart(2,"0")).join("")}`; }
@@ -581,10 +724,34 @@ async function fetchStructure(accession) {
   if (!meta.ok) throw new Error("No AlphaFold structure available for " + accession);
   const payload = await meta.json();
   const pdbUrl = payload?.[0]?.pdbUrl;
+  amUrl = payload?.[0]?.amAnnotationsUrl || null;  // AlphaMissense CSV, fetched lazily
   if (!pdbUrl) throw new Error("No AlphaFold structure available for " + accession);
   const r = await fetch(pdbUrl);
   if (!r.ok) throw new Error("Could not download structure for " + accession);
   return await r.text();
+}
+
+// Live AlphaMissense: average the per-variant pathogenicity at each residue → {pos: 0..1}.
+async function fetchAlphaMissense(url) {
+  if (!url) return null;
+  try {
+    const r = await fetch(url);
+    if (!r.ok) return null;
+    const text = await r.text();
+    const sums = {}, counts = {};
+    for (const line of text.split("\n")) {
+      const c = line.split(",");
+      if (c.length < 2) continue;
+      const m = c[0].match(/^[A-Za-z](\d+)[A-Za-z]$/);  // protein_variant e.g. R175H; skips header
+      const v = parseFloat(c[1]);                        // am_pathogenicity 0..1
+      if (!m || isNaN(v)) continue;
+      const p = +m[1];
+      sums[p] = (sums[p] || 0) + v; counts[p] = (counts[p] || 0) + 1;
+    }
+    const out = {};
+    for (const p in sums) out[p] = sums[p] / counts[p];
+    return Object.keys(out).length ? out : null;
+  } catch (e) { return null; }
 }
 
 async function fetchHotspots(gene) {
@@ -635,8 +802,18 @@ function renderStructure(pdb, highlights, mode) {
     const max = Math.max(...eng.priority.map(r => r.score)) || 1;
     const vals = {}; eng.priority.forEach(r => vals[r.position] = r.score / max);
     colorResiduesByValue(vals, PRIORITY_STOPS);
+  } else if (mode === "path" && currentAM) {
+    viewer.setStyle({}, { cartoon: { color: "0x303034" } });
+    colorResiduesByValue(currentAM, PATH_STOPS);
   } else {
     viewer.setStyle({}, { cartoon: { colorscheme: { prop: "b", gradient: "roygb", min: 50, max: 90 } } });
+  }
+  if (showPockets && eng && eng.pockets && eng.pockets.length) {
+    eng.pockets.forEach((pk, i) => {
+      viewer.addSurface($3Dmol.SurfaceType.VDW,
+        { opacity: 0.55, color: POCKET_COLORS[i % POCKET_COLORS.length] },
+        { resi: pk.residues });
+    });
   }
   highlights.forEach((h, i) => {
     const color = HIGHLIGHT_COLORS[i % HIGHLIGHT_COLORS.length];
@@ -645,26 +822,45 @@ function renderStructure(pdb, highlights, mode) {
     viewer.addStyle(sel, { sphere: { color, opacity: 0.55 } });
     viewer.addResLabels(sel, { fontSize: 11, backgroundColor: color, backgroundOpacity: 0.75, fontColor: "black" });
   });
+  if (spotlightPos != null && !highlights.some(h => h.position === spotlightPos)) {
+    const sel = { resi: spotlightPos };
+    viewer.addStyle(sel, { stick: { color: "0xffffff", radius: 0.28 } });
+    viewer.addResLabels(sel, { fontSize: 11, backgroundColor: "0x141417", backgroundOpacity: 0.85, fontColor: "0xE8E3D6" });
+  }
   viewer.zoomTo();
   currentZoom = 1;
   const z = $("zoom"); if (z) z.value = "1";
   viewer.render();
-  const tail = highlights.length ? ' <span>· glowing spheres = your mutations</span>' : '';
+  let tail = highlights.length ? ' <span>· glowing spheres = your mutations</span>' : '';
+  if (showPockets && eng && eng.pockets && eng.pockets.length) {
+    tail += ` <span><span class="swatch" style="background:#6fb1ff"></span>translucent blobs = <span class="term" title="A pocket on the protein surface big and enclosed enough that a drug molecule could plausibly bind there.">druggable pockets</span></span>`;
+  }
   if (mode === "flex") {
     $("legend").innerHTML = `<span><span class="swatch" style="background:#3c5ae6"></span>rigid core</span>
       <span><span class="swatch" style="background:#e6e6e6"></span>intermediate</span>
       <span><span class="swatch" style="background:#dc3c3c"></span>mobile</span>
-      <span class="term" title="Elastic Network Model normal-mode analysis — intrinsic motion inferred from one structure, no simulation.">(ENM/NMA flexibility)</span>${tail}`;
+      <span class="beginner-only legend-plain">how much each part naturally flexes</span>
+      <span class="expert-only term" title="Elastic Network Model normal-mode analysis — intrinsic motion inferred from one structure, no simulation.">(ENM/NMA flexibility)</span>${tail}`;
   } else if (mode === "priority") {
     $("legend").innerHTML = `<span><span class="swatch" style="background:#2a2a2e"></span>low</span>
       <span><span class="swatch" style="background:#6e5c34"></span>·</span>
       <span><span class="swatch" style="background:#c6a15b"></span>gold</span>
-      <span><span class="swatch" style="background:#b23a3a"></span>highest priority</span>${tail}`;
+      <span><span class="swatch" style="background:#b23a3a"></span>highest priority</span>
+      <span class="beginner-only legend-plain">redder = more worth targeting</span>
+      <span class="expert-only term" title="Target Priority Score — a 0–1 fusion of recurrence, pathogenicity, druggability and structural criticality.">(Target Priority Score)</span>${tail}`;
+  } else if (mode === "path") {
+    $("legend").innerHTML = `<span><span class="swatch" style="background:#469660"></span>likely benign</span>
+      <span><span class="swatch" style="background:#e1c85a"></span>uncertain</span>
+      <span><span class="swatch" style="background:#c83c3c"></span>likely pathogenic</span>
+      <span class="beginner-only legend-plain">redder = a mutation here is more likely harmful</span>
+      <span class="expert-only term" title="AlphaMissense — DeepMind's AI prediction of how damaging each possible amino-acid change is, averaged here per residue.">(AlphaMissense)</span>${tail}`;
   } else {
     $("legend").innerHTML = `<span><span class="swatch" style="background:#e63a3a"></span>low confidence</span>
       <span><span class="swatch" style="background:#f2d641"></span>medium</span>
       <span><span class="swatch" style="background:#2db84d"></span>good</span>
-      <span><span class="swatch" style="background:#3a6ee6"></span>high <span class="term" title="pLDDT — AlphaFold's per-residue confidence score (0–100) for how sure it is about that part's predicted shape.">(pLDDT)</span></span>${tail}`;
+      <span><span class="swatch" style="background:#3a6ee6"></span>high</span>
+      <span class="beginner-only legend-plain">how sure the AI is about each part's shape</span>
+      <span class="expert-only term" title="pLDDT — AlphaFold's per-residue confidence score (0–100) for how sure it is about that part's predicted shape.">(pLDDT)</span>${tail}`;
   }
 }
 
@@ -679,10 +875,6 @@ function renderDetails(p) {
 
 function renderAbout(p) {
   const info = GENE_INFO[p.gene];
-  const ROLE_DEF = {
-    "Oncogene": "Oncogene — a gene that, when mutated or overactive, drives cells to grow and divide uncontrollably.",
-    "Tumor suppressor": "Tumor suppressor — a gene that normally restrains cell growth or repairs damage; losing it removes a brake on cancer.",
-  };
   if (info) {
     const cls = info.role === "Oncogene" ? "onco" : "suppressor";
     $("about").innerHTML = `
@@ -724,16 +916,15 @@ function renderHotspots(list) {
   if (!list.length) { box.innerHTML = '<div class="muted">No hotspot record for this gene (the dataset is weighted toward solid tumours).</div>'; return; }
   const max = list[0].count || 1;
   const rows = list.slice(0, 15).map(h => {
-    const mutLabel = h.top ? `${h.residue}${h.top}` : h.residue;
-    return `<tr class="hot" data-mut="${mutLabel}" title="Click to highlight ${mutLabel}">
+    return `<tr class="hot" data-pos="${h.position}" title="Click for details on ${h.residue}">
       <td><b>${h.residue}</b></td>
       <td>${h.count.toLocaleString()}</td>
       <td style="width:40%"><div class="bar" style="width:${Math.max(6, 100*h.count/max)}%"></div></td>
     </tr>`;
   }).join("");
   box.innerHTML = `<table><thead><tr><th>Spot</th><th>Tumours</th><th></th></tr></thead><tbody>${rows}</tbody></table>
-    <div class="muted" style="margin-top:8px">Spots mutated again and again across many patients — <b>click a row</b> to drop it onto the 3D structure.</div>`;
-  box.querySelectorAll("tr.hot").forEach(tr => tr.onclick = () => addMutation(tr.getAttribute("data-mut")));
+    <div class="muted" style="margin-top:8px">Spots mutated again and again across many patients — <b>click a row</b> to spotlight it in 3D and read what it does.</div>`;
+  box.querySelectorAll("tr.hot").forEach(tr => tr.onclick = () => selectResidue(+tr.getAttribute("data-pos")));
 }
 
 function renderPriority(eng) {
@@ -746,42 +937,135 @@ function renderPriority(eng) {
   const pip = (v, title) => `<span class="pip" title="${title}: ${(+v).toFixed(2)}"><i style="transform:scaleX(${Math.max(0,Math.min(1,v))})"></i></span>`;
   const rows = eng.priority.slice(0, 15).map(r => {
     const col = lerpColor(r.score / max, PRIORITY_STOPS).replace("0x", "#");
-    return `<tr class="hot" data-pos="${r.position}" title="Click to highlight ${r.residue}">
+    return `<tr class="hot" data-pos="${r.position}" title="Click for details on ${r.residue}">
       <td><b>${r.residue}</b></td>
       <td><div class="scorecell"><div class="track"><div class="fill" style="width:${100*r.score/max}%;background:${col}"></div></div><span class="num">${Math.round(r.score)}</span></div></td>
-      <td><div class="axes">${pip(r.recurrence,"Recurrence")}${pip(r.pathogenicity,"Pathogenicity")}${pip(r.druggability,"Druggability")}${pip(r.criticality,"Criticality")}</div></td>
+      <td class="expert-only"><div class="axes">${pip(r.recurrence,"Recurrence")}${pip(r.pathogenicity,"Pathogenicity")}${pip(r.druggability,"Druggability")}${pip(r.criticality,"Criticality")}</div></td>
       <td class="why" title="${r.rationale}">${r.rationale}</td>
     </tr>`;
   }).join("");
   let summary = "";
-  if (eng.dynamics) summary += `<div class="dyn-line"><b>Folding dynamics:</b> ENM/NMA over ${eng.dynamics.n_modes} modes · hinge/pivot residues ${eng.dynamics.hinges.slice(0,6).join(", ") || "—"}.</div>`;
-  if (eng.pockets && eng.pockets.length) { const p = eng.pockets[0]; summary += `<div class="dyn-line"><b>Druggability:</b> ${eng.pockets.length} pocket(s) detected; top ${p.volume} Å³, druggability ${(+p.druggability).toFixed(2)}.</div>`; }
+  if (eng.dynamics) summary += `<div class="dyn-line expert-only"><b>Folding dynamics:</b> ENM/NMA over ${eng.dynamics.n_modes} modes · hinge/pivot residues ${eng.dynamics.hinges.slice(0,6).join(", ") || "—"}.</div>`;
+  if (eng.pockets && eng.pockets.length) { const p = eng.pockets[0]; summary += `<div class="dyn-line expert-only"><b>Druggability:</b> ${eng.pockets.length} pocket(s) detected; top ${p.volume} Å³, druggability ${(+p.druggability).toFixed(2)}.</div>`; }
   if (eng.targets && eng.targets.tractability && eng.targets.tractability.length) {
     const mods = [...new Set(eng.targets.tractability.map(t => t.modality))];
     const dis = eng.targets.top_diseases && eng.targets.top_diseases.length ? ` · top link: ${eng.targets.top_diseases[0].name}` : "";
-    summary += `<div class="dyn-line"><b>Open Targets:</b> tractable via ${mods.join(", ")}${dis}.</div>`;
+    summary += `<div class="dyn-line expert-only"><b>Open Targets:</b> tractable via ${mods.join(", ")}${dis}.</div>`;
   }
-  box.innerHTML = `<table><thead><tr><th>Residue</th><th>Priority</th><th>Recur · Path · Drug · Crit</th><th>Why it ranks here</th></tr></thead><tbody>${rows}</tbody></table>
-    <div class="muted" style="margin-top:8px">Priority = 0.30·recurrence + 0.35·pathogenicity + 0.20·druggability + 0.15·structural criticality. Pathogenicity from DeepMind <b>AlphaMissense</b>; criticality from <b>ENM/NMA</b> dynamics. <b>Click a row</b> to drop it onto the 3D structure.</div>${summary}`;
-  box.querySelectorAll("tr.hot").forEach(tr => tr.onclick = () => {
-    const pos = +tr.getAttribute("data-pos");
-    const hit = currentHotspots.find(x => x.position === pos);
-    const row = eng.priority.find(x => x.position === pos);
-    const wt = (row && row.wt) || (hit && hit.residue[0]) || "";
-    const mut = hit && hit.top && wt ? `${wt}${pos}${hit.top}` : null;
-    if (mut) addMutation(mut);
-    else setStatus(`<b>${(row && row.residue) || pos}</b> is a recurrent region (e.g. an in-frame deletion) with no single-residue substitution to drop onto the structure.`, "info");
-  });
+  box.innerHTML = `<table><thead><tr><th>Residue</th><th>Priority</th><th class="expert-only">Recur · Path · Drug · Crit</th><th>Why it ranks here</th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="muted" style="margin-top:8px"><span class="expert-only">Priority = 0.30·recurrence + 0.35·pathogenicity + 0.20·druggability + 0.15·structural criticality. Pathogenicity from DeepMind <b>AlphaMissense</b>; criticality from <b>ENM/NMA</b> dynamics. </span><b>Click a row</b> to spotlight that residue in 3D and read why it ranks here.</div>${summary}`;
+  box.querySelectorAll("tr.hot").forEach(tr => tr.onclick = () => selectResidue(+tr.getAttribute("data-pos")));
+}
+
+function renderPockets(eng) {
+  const box = $("pockets");
+  if (!eng || !eng.pockets || !eng.pockets.length) {
+    box.innerHTML = '<div class="muted">No precomputed pockets for this gene — pocket detection runs for the featured genes (TP53, KRAS, BRAF, KIT, FLT3, IDH2, PTEN, EGFR).</div>';
+    return;
+  }
+  const items = eng.pockets.map((pk, i) => {
+    const color = POCKET_COLORS[i % POCKET_COLORS.length].replace("0x", "#");
+    return `<div class="pock-item" data-pi="${i}" title="Fly the camera to this pocket">
+      <span class="pock-dot" style="background:${color}"></span>
+      <span class="pmeta">Pocket ${i + 1} <small>· ${pk.residues.length} residues · ${Math.round(pk.volume)} Å³</small></span>
+      <span class="pdrug" title="Druggability score, 0–1">${(+pk.druggability).toFixed(2)}</span>
+    </div>`;
+  }).join("");
+  box.innerHTML = `<div class="pock-list">${items}</div>
+    <div class="muted" style="margin-top:10px">A <span class="term" title="LIGSITE — a geometric scan that flags surface cavities enclosed enough to cradle a small molecule.">LIGSITE-style</span> scan for cavities a drug could bind. Tick <b>Show druggable pockets</b> to overlay them; click a pocket to fly the camera to it.</div>`;
+  box.querySelectorAll(".pock-item").forEach(el => el.onclick = () => focusPocket(+el.getAttribute("data-pi")));
+}
+
+function focusPocket(i) {
+  const pk = currentEngine && currentEngine.pockets && currentEngine.pockets[i];
+  if (!pk || !viewer) return;
+  if (!showPockets) { $("pockToggle").checked = true; showPockets = true; applyMutations(); }
+  viewer.zoomTo({ resi: pk.residues });
+  currentZoom = 1; const z = $("zoom"); if (z) z.value = "1";
+  viewer.render();
+  setStatus(`Focused on <b>pocket ${i + 1}</b> — ${pk.residues.length} residues, ${Math.round(pk.volume)} Å³, druggability ${(+pk.druggability).toFixed(2)}.`, "info");
+}
+
+// Click any residue (priority row, hotspot, track tick) → spotlight card + camera fly-in.
+function selectResidue(pos) {
+  if (!currentProtein || !lastPdb) return;
+  const eng = currentEngine;
+  const pr = (eng && eng.priority) ? eng.priority.find(x => x.position === pos) : null;
+  const hit = currentHotspots.find(x => x.position === pos);
+  const wt = (pr && pr.wt) || (currentProtein.sequence[pos - 1]) || "";
+  const label = (pr && pr.residue) || (hit && hit.residue) || `${wt}${pos}`;
+  const maxHot = (currentHotspots[0] && currentHotspots[0].count) || 1;
+
+  let flex = null, isHinge = false;
+  if (eng && eng.dynamics) {
+    const di = eng.dynamics.residue_numbers.indexOf(pos);
+    if (di >= 0) flex = eng.dynamics.flexibility[di];
+    isHinge = (eng.dynamics.hinges || []).includes(pos);
+  }
+  const inPocket = (eng && eng.pockets) ? eng.pockets.findIndex(pk => pk.residues.includes(pos)) : -1;
+  const pathV = pr ? pr.pathogenicity : (currentAM && currentAM[pos] != null ? currentAM[pos] : null);
+  const amClass = pr ? pr.am_class : null;
+  const recurV = pr ? pr.recurrence : (hit ? hit.count / maxHot : null);
+  const drugV = pr ? pr.druggability : (inPocket >= 0 ? currentEngine.pockets[inPocket].druggability : null);
+
+  const tag = amClass ? `<span class="rtag ${AM_TAGCLASS[amClass] || "amb"}">${AM_LABEL[amClass] || amClass}</span>` : "";
+  const metric = (lab, v, txt) => (v == null) ? "" :
+    `<div class="res-metric"><span class="mlab">${lab}</span><span class="track"><span class="fill" style="width:${Math.round(100 * Math.max(0, Math.min(1, v)))}%"></span></span><span class="mval">${txt}</span></div>`;
+
+  const lines = [];
+  lines.push(hit
+    ? `Mutated in <b>${hit.count.toLocaleString()}</b> tumours — a recurrent <span class="term" title="A spot mutated again and again across many patients' tumours.">hotspot</span>.`
+    : `Not among the recorded recurrent hotspots for this gene.`);
+  if (amClass) lines.push(`AlphaMissense rates amino-acid changes here as <b>${(AM_LABEL[amClass] || amClass).toLowerCase()}</b>.`);
+  else if (pathV != null) lines.push(`AlphaMissense pathogenicity here averages <b>${pathV.toFixed(2)}</b> (0 = benign, 1 = damaging).`);
+  if (inPocket >= 0) lines.push(`Lines <b>druggable pocket ${inPocket + 1}</b> — a place a drug could grip.`);
+  if (isHinge) lines.push(`Sits at a structural <span class="term" title="A pivot point the protein flexes around; changes here can disrupt how the whole molecule moves.">hinge</span> — a pivot for the protein's motion.`);
+  if (pr && pr.rationale) lines.push(`<b>Why it ranks:</b> ${pr.rationale}.`);
+
+  const topMut = hit && hit.top && wt ? `${wt}${pos}${hit.top}` : null;
+  const actions = topMut
+    ? `<button class="hbtn" data-add="${topMut}">Highlight ${topMut}</button>`
+    : `<span class="muted">No single-residue substitution recorded to highlight.</span>`;
+
+  $("resDetail").innerHTML = `
+    <div class="res-head"><span class="rlabel">${label}</span>${tag}
+      ${pr ? `<span class="rtag">priority ${Math.round(pr.score)}</span>` : ""}</div>
+    <div class="res-metrics">
+      ${metric("Recurrence", recurV, hit ? hit.count.toLocaleString() : "—")}
+      ${metric("Pathogenicity", pathV, pathV != null ? pathV.toFixed(2) : "—")}
+      ${metric("Druggability", drugV, drugV != null ? (+drugV).toFixed(2) : "—")}
+      ${metric(pr ? "Criticality" : "Flexibility", pr ? pr.criticality : flex, (pr ? pr.criticality : flex) != null ? (pr ? pr.criticality : flex).toFixed(2) : "—")}
+    </div>
+    <div class="res-why">${lines.join(" ")}</div>
+    <div class="res-actions">${actions}</div>`;
+  const addBtn = $("resDetail").querySelector("[data-add]");
+  if (addBtn) addBtn.onclick = () => addMutation(addBtn.getAttribute("data-add"));
+
+  // Spotlight in 3D and fly the camera in.
+  spotlightPos = pos;
+  renderStructure(lastPdb, lastHighlights, $("colormode").value);
+  if (viewer) {
+    viewer.zoomTo({ resi: pos });
+    currentZoom = 1; const z = $("zoom"); if (z) z.value = "1";
+    viewer.render();
+  }
 }
 
 function updateColorModeAvailability() {
-  const has = !!(currentEngine && currentEngine.dynamics);
+  const hasEng = !!(currentEngine && currentEngine.dynamics);
+  const hasAM = !!currentAM;
   const sel = $("colormode");
-  [...sel.options].forEach(o => { if (o.value !== "plddt") o.disabled = !has; });
-  if (!has && sel.value !== "plddt") sel.value = "plddt";
-  $("engineNote").textContent = has
-    ? "Dynamics & priority colouring loaded for this gene."
-    : "Dynamics & priority colouring are precomputed for the featured genes; this gene uses live data only.";
+  const avail = { plddt: true, path: hasAM, flex: hasEng, priority: hasEng };
+  [...sel.options].forEach(o => { o.disabled = !avail[o.value]; });
+  if (avail[sel.value] === false) sel.value = "plddt";
+  const hasPock = !!(currentEngine && currentEngine.pockets && currentEngine.pockets.length);
+  const pt = $("pockToggle");
+  pt.disabled = !hasPock;
+  if (!hasPock && pt.checked) { pt.checked = false; showPockets = false; }
+  $("pockToggleRow").style.opacity = hasPock ? "1" : ".5";
+  $("engineNote").textContent = hasEng
+    ? "Dynamics, priority & pockets are loaded for this gene." + (hasAM ? "" : " Pathogenicity colouring loads in a moment.")
+    : "Dynamics, priority & pockets are precomputed for the featured genes; other genes still get live AlphaMissense pathogenicity.";
 }
 
 let lastPdb = null;
@@ -818,7 +1102,9 @@ async function load() {
   const sk = '<div class="skeleton sk-line" style="width:85%"></div><div class="skeleton sk-line" style="width:96%"></div><div class="skeleton sk-line" style="width:62%"></div>';
   $("about").innerHTML = sk; $("details").innerHTML = sk;
   $("hotspots").innerHTML = sk; $("cancerTypes").innerHTML = sk; $("priority").innerHTML = sk;
-  currentEngine = null;
+  $("pockets").innerHTML = sk;
+  $("resDetail").innerHTML = '<div class="empty">Click any residue — a ranked target, a hotspot, or a tick on the position map — to see what it does and why it matters here.</div>';
+  currentEngine = null; currentAM = null; amUrl = null; spotlightPos = null;
   try {
     const protein = await fetchProtein(gene);
     if (!protein) { setStatus(`No reviewed human protein found for <b>${gene}</b>. Check the symbol.`, "err"); return; }
@@ -829,8 +1115,15 @@ async function load() {
     const enginePromise = fetchEngine(gene);  // precomputed dynamics/priority (featured genes)
     lastPdb = await fetchStructure(protein.accession);
     currentEngine = await enginePromise;
+    renderPockets(currentEngine);
     updateColorModeAvailability();
     applyMutations();
+    // AlphaMissense is best-effort and large-ish; load it without blocking the render.
+    fetchAlphaMissense(amUrl).then(am => {
+      currentAM = am;
+      updateColorModeAvailability();
+      if ($("colormode").value === "path") applyMutations();
+    });
     // Hotspots are best-effort and must not block the structure render.
     fetchHotspots(gene).then(list => {
       renderHotspots(list);
@@ -849,18 +1142,158 @@ $("load").onclick = load;
 $("gene").addEventListener("keydown", e => { if (e.key === "Enter") load(); });
 $("muts").addEventListener("change", applyMutations);
 $("colormode").addEventListener("change", applyMutations);
+$("pockToggle").addEventListener("change", e => { showPockets = e.target.checked; applyMutations(); });
 $("zoom").addEventListener("input", e => setZoom(+e.target.value));
 $("resetView").onclick = () => { if (!viewer) return; viewer.zoomTo(); currentZoom = 1; $("zoom").value = "1"; viewer.render(); };
 $("trackClear").onclick = clearMutations;
 
-try { if (!localStorage.getItem("cpe_seen")) $("firstrun").hidden = false; } catch (e) {}
-$("firstrunX").onclick = () => { $("firstrun").hidden = true; try { localStorage.setItem("cpe_seen", "1"); } catch (e) {} };
+// ── Beginner / Expert detail level ───────────────────────────────────────────
+function setMode(mode) {
+  document.body.classList.toggle("mode-beginner", mode === "beginner");
+  document.body.classList.toggle("mode-expert", mode === "expert");
+  $("modeSwitch").querySelectorAll(".ms-opt").forEach(b => b.classList.toggle("active", b.dataset.mode === mode));
+  try { localStorage.setItem("cpe_mode", mode); } catch (e) {}
+}
+$("modeSwitch").querySelectorAll(".ms-opt").forEach(b => b.onclick = () => setMode(b.dataset.mode));
+let savedMode = "beginner";
+try { savedMode = localStorage.getItem("cpe_mode") || "beginner"; } catch (e) {}
+setMode(savedMode);
+
+// ── Glossary modal ───────────────────────────────────────────────────────────
+const GLOSSARY = [
+  ["Oncogene", ROLE_DEF["Oncogene"]],
+  ["Tumor suppressor", ROLE_DEF["Tumor suppressor"]],
+  ["Mutation (e.g. R175H)", "A change to one building block (amino acid) of a protein — here, arginine (R) at position 175 swapped for histidine (H). Single changes can break a protein's job."],
+  ["Hotspot", "A spot in the protein mutated again and again across many patients' tumours — a sign it matters for the cancer."],
+  ["pLDDT", "AlphaFold's per-residue confidence score (0–100) for how sure the AI is about that part's predicted shape. It is a confidence measure, not a medical signal."],
+  ["AlphaMissense", "DeepMind's AI prediction of how damaging each possible amino-acid change is. Averaged per residue here to colour the structure benign → pathogenic."],
+  ["Druggable pocket", "A cavity on the protein surface big and enclosed enough that a drug molecule could plausibly bind there."],
+  ["ENM / NMA flexibility", "Elastic Network Model normal-mode analysis — the protein's intrinsic motion inferred from a single structure (no simulation). Shows which parts are rigid vs. mobile."],
+  ["Hinge", "A pivot point the protein flexes around. Mutations at a hinge can disrupt how the whole molecule moves."],
+  ["Target Priority Score", "This tool's fused ranking: 0.30·recurrence + 0.35·pathogenicity + 0.20·druggability + 0.15·structural criticality. Higher = a more actionable cancer-driver residue."],
+];
+$("glossList").innerHTML = GLOSSARY.map(([t, d]) => `<dt>${t}</dt><dd>${d}</dd>`).join("");
+function openGlossary() { $("glossaryModal").classList.add("open"); }
+function closeGlossary() { $("glossaryModal").classList.remove("open"); }
+$("glossaryBtn").onclick = openGlossary;
+$("glossaryX").onclick = closeGlossary;
+$("glossaryModal").addEventListener("click", e => { if (e.target === $("glossaryModal")) closeGlossary(); });
+
+// ── Guided tour (coachmarks) ─────────────────────────────────────────────────
+const TOUR = [
+  ["#gene", "Pick a protein", "Type a cancer gene (TP53, KRAS, BRAF…) or click an example chip, then Load. The real AlphaFold structure downloads into your browser."],
+  ["#viewer", "Explore in 3D", "Drag to spin the folded protein, use the gold slider to zoom. The coloured ribbon is the chain; the colour mode is set on the left."],
+  ["#postrack", "The position map", "Every gold tick is a mutation hotspot along the chain — taller = more tumours. Click one to spotlight that residue in 3D."],
+  ["#priorityCard", "Ranked targets", "A shortlist of the most actionable driver residues, fusing how often they're mutated, how damaging, how druggable, and how structurally critical. Click a row for the full story."],
+  ["#resCard", "Residue spotlight", "Whatever residue you click lands here in plain English — what it does, how often it's mutated, and why it might be a drug target."],
+  ["#displayPanel", "Colour & pockets", "Recolour the structure by AlphaFold confidence, AlphaMissense pathogenicity, flexibility, or priority — and overlay the druggable pockets a drug could bind."],
+];
+let tourStep = 0;
+function showTourStep() {
+  const [sel, title, body] = TOUR[tourStep];
+  const el = document.querySelector(sel);
+  if (!el) { tourStep++; return tourStep < TOUR.length ? showTourStep() : endTour(true); }
+  $("tourTitle").textContent = title; $("tourBody").textContent = body;
+  $("tourSteps").textContent = `${tourStep + 1} / ${TOUR.length}`;
+  $("tourBack").style.visibility = tourStep === 0 ? "hidden" : "visible";
+  $("tourNext").textContent = tourStep === TOUR.length - 1 ? "Done" : "Next";
+  // Scroll the target into view FIRST (instant — a smooth/async scroll would leave
+  // getBoundingClientRect reading stale, often off-screen coordinates), then place the
+  // spotlight + popover on the next frame once layout has settled.
+  el.scrollIntoView({ block: "center", inline: "nearest" });
+  requestAnimationFrame(() => placeTourOn(el));
+}
+function placeTourOn(el) {
+  const r = el.getBoundingClientRect();
+  const vh = window.innerHeight, vw = window.innerWidth;
+  const spot = $("tourSpot"), pop = $("tourPop");
+  // Clamp the highlight box to the viewport so the spotlight never collapses off-screen.
+  const top = Math.max(0, r.top), left = Math.max(0, r.left);
+  const bottom = Math.min(vh, r.bottom), right = Math.min(vw, r.right);
+  spot.style.left = (left - 6) + "px"; spot.style.top = (top - 6) + "px";
+  spot.style.width = Math.max(0, right - left + 12) + "px";
+  spot.style.height = Math.max(0, bottom - top + 12) + "px";
+  // Prefer the popover below the highlight; flip above if it would overflow the bottom.
+  const ph = pop.offsetHeight || 200, pw = pop.offsetWidth || 320;
+  let pTop = bottom + 14;
+  if (pTop + ph > vh - 12) pTop = top - ph - 14;
+  pTop = Math.max(12, Math.min(vh - ph - 12, pTop));
+  const pLeft = Math.max(12, Math.min(vw - pw - 12, left));
+  pop.style.top = pTop + "px"; pop.style.left = pLeft + "px";
+}
+function startTour() { tourStep = 0; $("tourMask").classList.add("open"); showTourStep(); }
+function endTour(done) {
+  $("tourMask").classList.remove("open");
+  if (done) { try { localStorage.setItem("cpe_seen", "1"); } catch (e) {} }
+}
+$("tourBtn").onclick = startTour;
+$("tourNext").onclick = () => { if (tourStep === TOUR.length - 1) endTour(true); else { tourStep++; showTourStep(); } };
+$("tourBack").onclick = () => { if (tourStep > 0) { tourStep--; showTourStep(); } };
+$("tourSkip").onclick = () => endTour(true);
+window.addEventListener("resize", () => { if ($("tourMask").classList.contains("open")) showTourStep(); });
 
 // Stop wheel events before 3Dmol's canvas zooms, so the page scrolls normally over the viewer.
 document.querySelector(".viewer-wrap")
   .addEventListener("wheel", e => e.stopPropagation(), { capture: true, passive: true });
 
 load();
+// Auto-run the tour on a first-ever visit, once the page has settled.
+try { if (!localStorage.getItem("cpe_seen")) setTimeout(startTour, 900); } catch (e) {}
+
+// ── Header emblem: a spinning crimson DNA double-helix (ported from the Vedra
+//    Research portfolio's VR-01 visual). Self-contained, isolated from the app. ──
+(function () {
+  const canvas = document.getElementById("helixEmblem");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  const W = canvas.width, H = canvas.height;
+  const CRIM = "178,58,58", BONE = "#E8E3D6";
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function dot(c, x, y, r, fill) { c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fillStyle = fill; c.fill(); }
+
+  function drawHelix(c, W, H, t) {
+    const cx = W * 0.5, top = H * 0.12, bot = H * 0.88, span = bot - top;
+    const amp = W * 0.20, turns = 2.2, N = 140, spin = t * 0.9;
+    c.strokeStyle = "rgba(140,140,147,0.28)"; c.lineWidth = 1;
+    c.beginPath(); c.moveTo(cx, 0); c.lineTo(cx, H); c.stroke();
+    function strandPts(phase) {
+      const pts = [];
+      for (let i = 0; i <= N; i++) {
+        const s = i / N, y = top + s * span, th = s * turns * Math.PI * 2 + spin + phase;
+        pts.push({ x: cx + amp * Math.sin(th), y: y, z: Math.cos(th) });
+      }
+      return pts;
+    }
+    const A = strandPts(0), B = strandPts(Math.PI), segs = [];
+    for (let i = 0; i < N; i++) {
+      segs.push({ k: "s", col: CRIM, p: A[i], q: A[i + 1], z: (A[i].z + A[i + 1].z) / 2 });
+      segs.push({ k: "s", col: "140,140,147", p: B[i], q: B[i + 1], z: (B[i].z + B[i + 1].z) / 2 });
+    }
+    for (let r = 0; r <= N; r += 7) { segs.push({ k: "r", col: CRIM, p: A[r], q: B[r], z: (A[r].z + B[r].z) / 2 }); }
+    segs.sort((m, n) => m.z - n.z);
+    for (let u = 0; u < segs.length; u++) {
+      const sg = segs[u], depth = (sg.z + 1) / 2;
+      if (sg.k === "r") { c.strokeStyle = "rgba(" + sg.col + "," + (0.14 + 0.30 * depth).toFixed(3) + ")"; c.lineWidth = 1; }
+      else { c.strokeStyle = "rgba(" + sg.col + "," + (0.22 + 0.62 * depth).toFixed(3) + ")"; c.lineWidth = 1 + 1.3 * depth; }
+      c.beginPath(); c.moveTo(sg.p.x, sg.p.y); c.lineTo(sg.q.x, sg.q.y); c.stroke();
+    }
+    for (let j = 0; j <= N; j += 7) {
+      if (A[j].z > 0.1) { dot(c, A[j].x, A[j].y, 1.6 + 1.4 * A[j].z, "rgba(" + CRIM + "," + (0.45 + 0.45 * A[j].z).toFixed(3) + ")"); }
+      if (B[j].z > 0.1) { dot(c, B[j].x, B[j].y, 1.3 + 1.1 * B[j].z, BONE); }
+    }
+  }
+
+  if (reduce) { ctx.clearRect(0, 0, W, H); drawHelix(ctx, W, H, -0.9); return; }
+  let t = 0;
+  (function loop() {
+    t += 0.011;
+    ctx.clearRect(0, 0, W, H);
+    drawHelix(ctx, W, H, t);
+    requestAnimationFrame(loop);
+  })();
+})();
 </script>
 </body>
 </html>

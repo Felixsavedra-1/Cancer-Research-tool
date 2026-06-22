@@ -1,10 +1,6 @@
-/**
- * Record the README hero GIF as a .webm via Playwright (convert with ffmpeg + gifski).
- * Serve the repo first, then run headless with ANGLE for reliable WebGL:
- *   python3 -m http.server 8766
- *   HEADLESS=1 CHROME_PATH=<chromium> NODE_PATH=<playwright> node scripts/record_demo.cjs
- * Env overrides: DEMO_URL, OUT_DIR, HEADLESS, CHROME_PATH.
- */
+// Record the README hero GIF source (.webm): scripted-scroll cancer-explorer.html in
+// headless Chromium, then convert with make_demo_gif.sh. Serve the repo first
+// (python3 -m http.server 8766). Env: DEMO_URL, OUT_DIR, HEADLESS, CHROME_PATH.
 const { chromium } = require('playwright');
 const fs = require('fs');
 
@@ -27,6 +23,24 @@ const H = 860;
     recordVideo: { dir: OUT_DIR, size: { width: W, height: H } },
   });
   const page = await context.newPage();
+
+  // The page's true scroll container (largest overflow); reused across evaluates.
+  await page.addInitScript(() => {
+    window.pickScroller = () => {
+      const cands = [document.scrollingElement, document.body, document.documentElement];
+      let best = document.scrollingElement || document.body;
+      let over = 0;
+      for (const e of cands) {
+        if (!e) continue;
+        const o = e.scrollHeight - e.clientHeight;
+        if (o > over) {
+          over = o;
+          best = e;
+        }
+      }
+      return best;
+    };
+  });
 
   const t0 = Date.now();
   await page.goto(URL, { waitUntil: 'load', timeout: 60000 });
@@ -53,23 +67,9 @@ const H = 860;
   // Pin to the very top and disable native smooth-scroll so our own ease drives the motion,
   // then hold briefly so the GIF has a clean top anchor frame.
   await page.evaluate(() => {
-    function pickScroller() {
-      const cands = [document.scrollingElement, document.body, document.documentElement];
-      let best = document.scrollingElement || document.body;
-      let over = 0;
-      for (const e of cands) {
-        if (!e) continue;
-        const o = e.scrollHeight - e.clientHeight;
-        if (o > over) {
-          over = o;
-          best = e;
-        }
-      }
-      return best;
-    }
     document.documentElement.style.scrollBehavior = 'auto';
     document.body.style.scrollBehavior = 'auto';
-    pickScroller().scrollTop = 0;
+    window.pickScroller().scrollTop = 0;
   });
   await page.waitForTimeout(600); // top hold
 
@@ -77,21 +77,7 @@ const H = 860;
   console.log('SCROLL_START_SEC=' + (scrollStartMs / 1000).toFixed(2));
 
   await page.evaluate(async () => {
-    function pickScroller() {
-      const cands = [document.scrollingElement, document.body, document.documentElement];
-      let best = document.scrollingElement || document.body;
-      let over = 0;
-      for (const e of cands) {
-        if (!e) continue;
-        const o = e.scrollHeight - e.clientHeight;
-        if (o > over) {
-          over = o;
-          best = e;
-        }
-      }
-      return best;
-    }
-    const el = pickScroller();
+    const el = window.pickScroller();
     const max = el.scrollHeight - el.clientHeight;
     const duration = 5200;
     const ease = (t) => 0.5 - 0.5 * Math.cos(Math.PI * t);
