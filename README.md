@@ -174,6 +174,13 @@ not be used for diagnosis or treatment decisions.
 
 ---
 
-<p align="center">
-  <img src="docs/VRcompany.png" alt="Vedra Research" width="50%">
-</p>
+<table align="center" width="100%">
+<tr>
+<td width="50%" align="center" valign="middle">
+  <img src="VRcompany.png" width="92%" alt="Vedra Research" />
+</td>
+<td width="50%" align="center" valign="middle">
+  <img src="vr01-helix.gif" width="92%" alt="VR-01 — animated double-helix visual: crimson and bone strands winding with base-pair rungs, evoking the protein-structure science at the core of the explorer" />
+</td>
+</tr>
+</table>
